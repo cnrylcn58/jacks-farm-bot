@@ -1,4 +1,5 @@
 import os
+import time
 import requests
 from playwright.sync_api import sync_playwright
 
@@ -7,21 +8,32 @@ TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID")
 GAME_URL = os.environ.get("GAME_URL", "")
 
 def send_telegram_message(message):
-    print(f"[LOG]: {message}")
+    """Telegram'a metin bildirimi gönderir."""
     if TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID:
         url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
         data = {"chat_id": TELEGRAM_CHAT_ID, "text": message}
         try:
-            res = requests.post(url, data=data, timeout=10)
-            print(f"[TELEGRAM API]: {res.status_code}")
+            requests.post(url, data=data)
         except Exception as e:
-            print(f"[TELEGRAM HATA]: {e}")
+            print(f"Telegram mesajı gönderilemedi: {e}")
+
+def send_telegram_photo(photo_path, caption=""):
+    """Telegram'a ekran görüntüsü gönderir."""
+    if TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID and os.path.exists(photo_path):
+        url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendPhoto"
+        try:
+            with open(photo_path, "rb") as photo:
+                requests.post(url, data={"chat_id": TELEGRAM_CHAT_ID, "caption": caption}, files={"photo": photo})
+        except Exception as e:
+            print(f"Telegram fotoğrafı gönderilemedi: {e}")
 
 def run():
+    print("Bot başlatılıyor...")
     send_telegram_message("🤖 Çiftlik Botu çalışmaya başladı.")
     
     if not GAME_URL:
-        send_telegram_message("⚠️ GAME_URL bulunamadı, lütfen Secrets ayarlarını kontrol edin.")
+        print("GAME_URL tanımlanmamış.")
+        send_telegram_message("⚠️ GAME_URL eksik, lütfen Secrets alanına ekleyin.")
         return
 
     try:
@@ -33,45 +45,34 @@ def run():
             )
             page = context.new_page()
             
-            print(f"Sohbet penceresine gidiliyor: {GAME_URL}")
-            page.goto(GAME_URL, wait_until="networkidle", timeout=30000)
-            page.wait_for_timeout(5000)
+            print(f"Oyuna bağlanılıyor: {GAME_URL}")
+            # domcontentloaded ile ağ yüklemelerinin tamamen bitmesini beklemeden devam eder (Timeout engelleyici)
+            page.goto(GAME_URL, wait_until="domcontentloaded", timeout=60000)
             
-            # Sol alttaki 'Open' butonuna tıklama işlemi
-            print("Open butonuna tıklanıyor...")
-            opened = False
-            for selector in ["button:has-text('Open')", "button:has-text('Oyna')", ".chat-input-control-button"]:
-                try:
-                    if page.is_visible(selector):
-                        page.click(selector)
-                        opened = True
-                        print(f"Buton bulundu ve tıklandı: {selector}")
-                        break
-                except:
-                    continue
-            
-            if not opened:
-                send_telegram_message("⚠️ 'Open' butonu ekranda bulunamadı. Oturum açık olmayabilir.")
-                browser.close()
-                return
-
-            print("Oyunun yüklenmesi bekleniyor...")
+            # Sayfanın / Oyunun kendine gelmesi için 10 saniye bekleme
             page.wait_for_timeout(10000)
             
-            # Depo & Satış Tıklamaları (Sağdaki depo alanı)
-            print("Depoya tıklanıyor...")
+            # 1. Adım: Depoya ürün aktarımı (Sağ ortadaki depoya tıklama)
+            print("Depoya ürünler aktarılıyor...")
             page.mouse.click(320, 420)
             page.wait_for_timeout(3000)
             
-            print("Satış butonuna tıklanıyor...")
+            # 2. Adım: Satış alanına tıklama (Sol üst/orta satış butonu)
+            print("Satış işlemi yapılıyor...")
             page.mouse.click(200, 280)
             page.wait_for_timeout(3000)
             
-            send_telegram_message("✅ Depodaki ürünler toplandı ve satıldı!")
+            # İşlem sonrası ekran görüntüsü alıp Telegram'a yollayalım
+            screenshot_path = "result.png"
+            page.screenshot(path=screenshot_path)
+            send_telegram_photo(screenshot_path, caption="✅ Depo boşaltıldı ve satış yapıldı!")
+            
             browser.close()
             
     except Exception as e:
-        send_telegram_message(f"❌ İşlem sırasında hata oluştu: {str(e)}")
+        error_msg = f"❌ İşlem sırasında hata oluştu:\n{str(e)}"
+        print(error_msg)
+        send_telegram_message(error_msg)
 
 if __name__ == "__main__":
     run()

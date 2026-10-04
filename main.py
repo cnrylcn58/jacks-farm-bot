@@ -51,23 +51,25 @@ def run():
             # Oyun ögelerinin yüklenmesi için bekleme
             page.wait_for_timeout(10000)
 
-            # 1. ADIM: Depo (Warehouse) binasına tıklama
+            # 1. ADIM: Warehouse (Depo) binasına tıklama
             print("Warehouse binasına tıklanıyor...")
             page.mouse.click(280, 290, delay=100)
             page.wait_for_timeout(2500)
             
-            # 2. ADIM: Mavi 'Send products' butonuna tıklama
+            # 2. ADIM: Mavi 'Send products' butonuna basma
             print("Send products butonuna basılıyor...")
-            page.mouse.click(195, 660, delay=100)
+            page.mouse.click(195, 740, delay=100)
             page.wait_for_timeout(2500)
             
-            # 3. ADIM: Depo penceresini sağ üstteki kırmızı X butonuyla kapatma
+            # 3. ADIM: Depo penceresini kapatma (Kırmızı X ve Boş alana tıklama)
             print("Depo penceresi kapatılıyor...")
-            page.mouse.click(350, 235, delay=100)
-            page.wait_for_timeout(2000)
+            page.mouse.click(330, 450, delay=100)  # Kırmızı X butonu
+            page.wait_for_timeout(1000)
+            page.mouse.click(20, 400, delay=100)   # Sol taraftaki boş alan
+            page.wait_for_timeout(1500)
             
-            # Pencere kapanmazsa garanti geçiş için sağ taraftaki Farm ikonuna tıklama
-            page.mouse.click(365, 605, delay=100)
+            # Ana çiftlik ekranına kesin dönüş yapma
+            page.mouse.click(365, 180, delay=100)
             page.wait_for_timeout(2000)
             
             # 4. ADIM: Sol üstteki kırmızı 'Sell' (Satış) butonuna basma
@@ -79,10 +81,10 @@ def run():
             page.mouse.click(195, 520, delay=100)
             page.wait_for_timeout(3000)
             
-            # Ekran görüntüsü alma ve gönderme
+            # Ekran görüntüsü alma ve Telegram'a gönderme
             screenshot_path = "result.png"
             page.screenshot(path=screenshot_path)
-            send_telegram_photo(screenshot_path, caption="✅ Depo boşaltıldı, pencere kapatıldı ve satış işlemi tamamlandı!")
+            send_telegram_photo(screenshot_path, caption="✅ Ürünler depodan gönderildi ve satış tamamlandı!")
             
             browser.close()
             

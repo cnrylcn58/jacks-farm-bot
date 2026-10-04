@@ -93,7 +93,7 @@ def run():
             # İlk görünüm görüntüsü
             screenshot(page, "00_ilk_acilis", "🏡 1. Oyun ilk açıldığındaki durum")
 
-            # 2. Tıklanacak Koordinat (Varsayılan Deneme: X=200, Y=300)
+            # 2. Tıklanacak Koordinat (Varsayılan Deneme: X=282, Y=253)
             target_x = 200
             target_y = 300
 

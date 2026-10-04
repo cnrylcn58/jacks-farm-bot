@@ -78,8 +78,8 @@ def run():
             # ==================================================
             # ADIM 1: DEPO BİNASINA TIKLA
             # ==================================================
-            # Ekran ortasındaki mavi "Warehouse" butonu
-            page.mouse.click(200, 480, delay=150)
+            # Mavi Warehouse butonunun tam ortası
+            page.mouse.click(200, 250, delay=150)
             page.wait_for_timeout(3500)
 
             screenshot(page, "01_depo_acildi", "📦 ADIM 1: Depo penceresi açıldı")

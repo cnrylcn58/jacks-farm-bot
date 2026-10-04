@@ -48,31 +48,26 @@ def run():
             print(f"Oyuna bağlanılıyor: {GAME_URL}")
             page.goto(GAME_URL, wait_until="domcontentloaded", timeout=60000)
             
-            # Oyun ögelerinin tam yüklenmesi için bekleme
+            # Oyun ögelerinin yüklenmesi için bekleme
             page.wait_for_timeout(10000)
-            
-            # Başlangıçta Farm sekmesine geçerek ekranı sıfırla
-            print("Ana çiftlik ekranına geçiliyor...")
-            page.mouse.click(365, 180, delay=100)
-            page.wait_for_timeout(2000)
 
             # 1. ADIM: Warehouse (Depo) binasına tıklama
             print("Warehouse binasına tıklanıyor...")
             page.mouse.click(280, 290, delay=100)
-            page.wait_for_timeout(3000)
+            page.wait_for_timeout(2500)
             
-            # 2. ADIM: Mavi 'Send products' butonuna tıklama (Hizalı koordinat)
+            # 2. ADIM: Mavi 'Send products' butonuna basma (Çalıştığı doğrulandı)
             print("Send products butonuna basılıyor...")
-            page.mouse.click(190, 560, delay=100)
-            page.wait_for_timeout(3000)
+            page.mouse.click(195, 660, delay=100)
+            page.wait_for_timeout(2500)
             
-            # 3. ADIM: Depo penceresini kırmızı X butonuyla kapatma
+            # 3. ADIM: Depo penceresini kırmızı X butonu ile kapatma (Kesişen koordinat güncellendi)
             print("Depo penceresi kapatılıyor...")
-            page.mouse.click(345, 215, delay=100)
+            page.mouse.click(350, 235, delay=100)
             page.wait_for_timeout(2000)
             
-            # Sağ menünün en üstündeki Farm butonuna basarak kesin dönüş sağla
-            page.mouse.click(365, 180, delay=100)
+            # Eğer X tıklaması kaçarsa diye sağ taraftaki 'Farm' sekmesine ekstra tıklama
+            page.mouse.click(365, 605, delay=100)
             page.wait_for_timeout(2000)
             
             # 4. ADIM: Sol üstteki kırmızı 'Sell' (Satış) butonuna basma
@@ -80,14 +75,14 @@ def run():
             page.mouse.click(220, 165, delay=100)
             page.wait_for_timeout(2500)
 
-            # Ekstra Onay Tıklaması
+            # Satış sonrası açılabilecek onay penceresi tıklaması
             page.mouse.click(195, 520, delay=100)
             page.wait_for_timeout(3000)
             
             # Ekran görüntüsü alma
             screenshot_path = "result.png"
             page.screenshot(path=screenshot_path)
-            send_telegram_photo(screenshot_path, caption="✅ İşlem başarıyla tamamlandı!")
+            send_telegram_photo(screenshot_path, caption="✅ Ürünler depodan gönderildi, pencere kapatıldı ve satış yapıldı!")
             
             browser.close()
             

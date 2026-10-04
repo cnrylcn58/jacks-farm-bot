@@ -42,8 +42,8 @@ def screenshot(page, name, caption):
 
 
 def run():
-    print("🤖 Çiftlik Botu - ADIM 1 & 2 Testi")
-    send_telegram_message("🤖 ADIM 1 & 2: Depo açılıyor ve ürünler gönderiliyor...")
+    print("🤖 Çiftlik Botu - 540x1200 Çözünürlük Testi")
+    send_telegram_message("🤖 Oyuna bağlanılıyor (540x1200 çözünürlüğü ile)...")
 
     if not GAME_URL:
         send_telegram_message("❌ GAME_URL tanımlanmamış.")
@@ -52,8 +52,9 @@ def run():
     try:
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=True)
+            # Ekran çözünürlüğünü 540x1200 olarak sabitliyoruz
             context = browser.new_context(
-                viewport={"width": 390, "height": 844},
+                viewport={"width": 540, "height": 1200},
                 user_agent=(
                     "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) "
                     "AppleWebKit/605.1.15 (KHTML, like Gecko) "
@@ -66,32 +67,15 @@ def run():
             page.goto(GAME_URL, wait_until="domcontentloaded", timeout=60000)
             page.wait_for_timeout(10000)
 
-            # Haritayı aşağı kaydırarak Depo binasını ekrana tam oturt
-            page.mouse.move(200, 300)
-            page.mouse.down()
-            page.mouse.move(200, 600, steps=10)
-            page.mouse.up()
-            page.wait_for_timeout(2000)
+            # İlk Durum Fotoğrafı
+            screenshot(page, "00_ekran_540x1200", "🏡 540x1200 Ekran Goruntusu")
 
-            screenshot(page, "00_ekran_ayarlandi", "🏡 Harita kaydırıldı, depo ortalandı")
-
-            # ==================================================
-            # ADIM 1: DEPO BİNASINA TIKLA
-            # ==================================================
-            # Mavi Warehouse butonunun tam ortası
-            page.mouse.click(200, 250, delay=150)
+            # 540x1200 çözünürlüğünde kaydırmasız ekranda Depo Binası koordinatı:
+            # (X: 300, Y: 420 civarı)
+            page.mouse.click(300, 420, delay=150)
             page.wait_for_timeout(3500)
 
-            screenshot(page, "01_depo_acildi", "📦 ADIM 1: Depo penceresi açıldı")
-
-            # ==================================================
-            # ADIM 2: ÜRÜNLERİ GÖNDER
-            # ==================================================
-            # Depo penceresindeki mavi "Send products" / "Ürünleri gönder" butonu
-            page.mouse.click(200, 600, delay=150)
-            page.wait_for_timeout(3500)
-
-            screenshot(page, "02_urunler_gonderildi", "🚚 ADIM 2: Ürünler gönderildi")
+            screenshot(page, "01_depo_540x1200", "📦 Depo tıklama sonrası")
 
             browser.close()
 

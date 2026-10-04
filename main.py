@@ -94,8 +94,8 @@ def run():
             screenshot(page, "00_ilk_acilis", "🏡 1. Oyun ilk açıldığındaki durum")
 
             # 2. Tıklanacak Koordinat (Varsayılan Deneme: X=282, Y=253)
-            target_x = 200
-            target_y = 300
+            target_x = 282
+            target_y = 253
 
             # Kırmızı nokta koy
             draw_click_marker(page, target_x, target_y)

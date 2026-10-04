@@ -1,5 +1,4 @@
 import os
-import time
 import requests
 from playwright.sync_api import sync_playwright
 
@@ -7,94 +6,236 @@ TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
 TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID")
 GAME_URL = os.environ.get("GAME_URL", "")
 
+
 def send_telegram_message(message):
-    """Telegram'a metin bildirimi gönderir."""
-    if TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID:
-        url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
-        data = {"chat_id": TELEGRAM_CHAT_ID, "text": message}
-        try:
-            requests.post(url, data=data)
-        except Exception as e:
-            print(f"Telegram mesajı gönderilemedi: {e}")
-
-def send_telegram_photo(photo_path, caption=""):
-    """Telegram'a ekran görüntüsü gönderir."""
-    if TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID and os.path.exists(photo_path):
-        url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendPhoto"
-        try:
-            with open(photo_path, "rb") as photo:
-                requests.post(url, data={"chat_id": TELEGRAM_CHAT_ID, "caption": caption}, files={"photo": photo})
-        except Exception as e:
-            print(f"Telegram fotoğrafı gönderilemedi: {e}")
-
-def run():
-    print("Bot başlatılıyor...")
-    send_telegram_message("🤖 Çiftlik Botu çalışmaya başladı.")
-    
-    if not GAME_URL:
-        print("GAME_URL tanımlanmamış.")
-        send_telegram_message("⚠️ GAME_URL eksik, lütfen Secrets alanına ekleyin.")
+    if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID:
         return
 
     try:
-        with sync_playwright() as p:
-            browser = p.chromium.launch(headless=True)
-            context = browser.new_context(
-                viewport={'width': 390, 'height': 844},
-                user_agent="Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1"
+        requests.post(
+            f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage",
+            data={
+                "chat_id": TELEGRAM_CHAT_ID,
+                "text": message
+            },
+            timeout=20
+        )
+    except Exception as e:
+        print("Telegram hata:", e)
+
+
+def send_telegram_photo(path, caption=""):
+    if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID:
+        return
+
+    try:
+        with open(path, "rb") as photo:
+            requests.post(
+                f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendPhoto",
+                data={
+                    "chat_id": TELEGRAM_CHAT_ID,
+                    "caption": caption
+                },
+                files={
+                    "photo": photo
+                },
+                timeout=30
             )
+    except Exception as e:
+        print("Fotoğraf gönderme hatası:", e)
+
+
+def screenshot(page, name, caption):
+    path = f"{name}.png"
+    page.screenshot(path=path)
+    send_telegram_photo(path, caption)
+
+
+def run():
+
+    print("🤖 Çiftlik Botu başlıyor...")
+    send_telegram_message("🤖 Çiftlik Botu çalışmaya başladı.")
+
+    if not GAME_URL:
+        send_telegram_message("❌ GAME_URL tanımlanmamış.")
+        return
+
+    try:
+
+        with sync_playwright() as p:
+
+            browser = p.chromium.launch(
+                headless=True
+            )
+
+            context = browser.new_context(
+                viewport={
+                    "width": 390,
+                    "height": 844
+                },
+                user_agent=(
+                    "Mozilla/5.0 "
+                    "(iPhone; CPU iPhone OS 16_6 like Mac OS X) "
+                    "AppleWebKit/605.1.15 "
+                    "(KHTML, like Gecko) "
+                    "Version/16.6 Mobile/15E148 Safari/604.1"
+                )
+            )
+
             page = context.new_page()
-            
-            print(f"Oyuna bağlanılıyor: {GAME_URL}")
-            page.goto(GAME_URL, wait_until="domcontentloaded", timeout=60000)
-            
-            # Oyun ögelerinin tam yüklenmesi için bekleme
+
+            # ==================================================
+            # OYUNA GİR
+            # ==================================================
+
+            print("🌐 Oyuna bağlanılıyor...")
+
+            page.goto(
+                GAME_URL,
+                wait_until="domcontentloaded",
+                timeout=60000
+            )
+
             page.wait_for_timeout(10000)
 
-            # 1. ADIM: Warehouse (Depo) binasına tıklama
-            print("Warehouse binasına tıklanıyor...")
-            page.mouse.click(280, 290, delay=100)
+            screenshot(
+                page,
+                "00_baslangic",
+                "🏡 Ana çiftlik ekranı."
+            )
+
+            # ==================================================
+            # 1. DEPO
+            # ==================================================
+
+            print("📦 1/4 - Depo açılıyor...")
+
+            # Sağ taraftaki DEPO butonu
+            page.mouse.click(
+                320,
+                365,
+                delay=150
+            )
+
             page.wait_for_timeout(3000)
-            
-            # 2. ADIM: Mavi 'Send products' butonunun TAM ORTASINA tıklama
-            print("Send products butonuna basılıyor...")
-            page.mouse.click(200, 735, delay=150)
-            page.wait_for_timeout(3500)
-            
-            # 3. ADIM: Depo penceresini kapatma (Kırmızı X)
-            print("Depo penceresi kapatılıyor...")
-            page.mouse.click(350, 415, delay=150)
-            page.wait_for_timeout(2000)
-            
-            # Ekranı temizlemek için boş alana tıklama (Sol taraf)
-            page.mouse.click(30, 400, delay=100)
-            page.wait_for_timeout(1500)
-            
-            # 4. ADIM: Sağ menüdeki Farm ikonuna tıklayarak ana çiftlik ekranına geçiş
-            print("Ana çiftlik ekranına dönülüyor...")
-            page.mouse.click(365, 605, delay=150)
-            page.wait_for_timeout(2500)
-            
-            # 5. ADIM: Sol üstteki 'Sell' (Satış) butonuna basma
-            print("Sell butonuna basılıyor...")
-            page.mouse.click(220, 165, delay=150)
+
+            screenshot(
+                page,
+                "01_depo",
+                "📦 Depo açıldı."
+            )
+
+            # ==================================================
+            # 2. ÜRÜNLERİ GÖNDER
+            # ==================================================
+
+            print("🚚 2/4 - Ürünleri gönderiliyor...")
+
+            # Mavi "Ürünleri gönder" butonu
+            #
+            # DİKKAT:
+            # Bu konum, senin söylediğin gibi
+            # 5. aşamadaki ikinci SAT butonuyla aynı.
+            page.mouse.click(
+                195,
+                435,
+                delay=150
+            )
+
+            page.wait_for_timeout(5000)
+
+            screenshot(
+                page,
+                "02_urunler_gonderildi",
+                "🚚 Ürünleri gönder butonuna basıldı."
+            )
+
+            # ==================================================
+            # 3. DEPOYU KAPAT
+            # ==================================================
+
+            print("❌ 3/4 - Depo kapatılıyor...")
+
+            # Depo penceresindeki X
+            page.mouse.click(
+                350,
+                65,
+                delay=150
+            )
+
             page.wait_for_timeout(2500)
 
-            # Ekstra onay penceresi tıklaması
-            page.mouse.click(195, 520, delay=100)
+            screenshot(
+                page,
+                "03_ana_sayfa",
+                "🏡 Ana çiftliğe dönüldü."
+            )
+
+            # ==================================================
+            # 4. İLK SAT
+            # ==================================================
+
+            print("🛒 4/4 - İlk Sat butonuna basılıyor...")
+
+            # Ana sayfanın sol üstündeki kırmızı SAT
+            page.mouse.click(
+                90,
+                240,
+                delay=150
+            )
+
             page.wait_for_timeout(3000)
-            
-            # Ekran görüntüsü alma ve Telegram'a gönderme
-            screenshot_path = "result.png"
-            page.screenshot(path=screenshot_path)
-            send_telegram_photo(screenshot_path, caption="✅ Depodaki ürünler gönderildi, pencere kapatıldı ve satış tamamlandı!")
-            
+
+            screenshot(
+                page,
+                "04_satis_ekrani",
+                "🛒 Satış ekranı açıldı."
+            )
+
+            # ==================================================
+            # 5. İKİNCİ SAT
+            # ==================================================
+
+            print("💰 5/5 - İkinci Sat butonuna basılıyor...")
+
+            # Senin belirttiğin gibi:
+            # Bu buton, DEPO içindeki "Ürünleri gönder"
+            # butonuyla AYNI KONUMDA.
+            page.mouse.click(
+                195,
+                435,
+                delay=150
+            )
+
+            page.wait_for_timeout(5000)
+
+            screenshot(
+                page,
+                "05_satis_tamamlandi",
+                "✅ İkinci Sat butonuna basıldı, satış tamamlandı."
+            )
+
+            send_telegram_message(
+                "✅ Çiftlik işlemi tamamlandı!\n\n"
+                "📦 Depo açıldı\n"
+                "🚚 Ürünleri gönderildi\n"
+                "🏡 Ana sayfaya dönüldü\n"
+                "🛒 İlk Sat'a basıldı\n"
+                "💰 İkinci Sat'a basıldı"
+            )
+
             browser.close()
-            
+
     except Exception as e:
-        error_msg = f"❌ İşlem sırasında hata oluştu:\n{str(e)}"
-        print(error_msg)
-        send_telegram_message(error_msg)
+
+        error = (
+            "❌ İşlem sırasında hata oluştu:\n\n"
+            + str(e)
+        )
+
+        print(error)
+        send_telegram_message(error)
+
 
 if __name__ == "__main__":
     run()

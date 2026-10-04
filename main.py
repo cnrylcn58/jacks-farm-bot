@@ -42,8 +42,8 @@ def screenshot(page, name, caption):
 
 
 def run():
-    print("🤖 Çiftlik Botu - ADIM 1: Depo Açma Denemesi")
-    send_telegram_message("🤖 ADIM 1: Oyuna giriliyor ve Depoya tıklanıyor...")
+    print("🤖 Çiftlik Botu - ADIM 1 & 2 Testi")
+    send_telegram_message("🤖 ADIM 1 & 2: Depo açılıyor ve ürünler gönderiliyor...")
 
     if not GAME_URL:
         send_telegram_message("❌ GAME_URL tanımlanmamış.")
@@ -66,15 +66,32 @@ def run():
             page.goto(GAME_URL, wait_until="domcontentloaded", timeout=60000)
             page.wait_for_timeout(10000)
 
-            # 1. Tıklamadan önceki ekran
-            screenshot(page, "00_tiklama_oncesi", "🏡 1. Tıklama öncesi ana ekran")
+            # Haritayı aşağı kaydırarak Depo binasını ekrana tam oturt
+            page.mouse.move(200, 300)
+            page.mouse.down()
+            page.mouse.move(200, 600, steps=10)
+            page.mouse.up()
+            page.wait_for_timeout(2000)
 
-            # Depo Binasına Tıkla (Y ekseni yukarı çekildi)
-            page.mouse.click(200, 160, delay=150)
-            page.wait_for_timeout(3000)
+            screenshot(page, "00_ekran_ayarlandi", "🏡 Harita kaydırıldı, depo ortalandı")
 
-            # 2. Tıklamadan sonraki ekran
-            screenshot(page, "01_tiklama_sonrasi", "📦 1. Tıklama sonrası ekran")
+            # ==================================================
+            # ADIM 1: DEPO BİNASINA TIKLA
+            # ==================================================
+            # Ekran ortasındaki mavi "Warehouse" butonu
+            page.mouse.click(200, 480, delay=150)
+            page.wait_for_timeout(3500)
+
+            screenshot(page, "01_depo_acildi", "📦 ADIM 1: Depo penceresi açıldı")
+
+            # ==================================================
+            # ADIM 2: ÜRÜNLERİ GÖNDER
+            # ==================================================
+            # Depo penceresindeki mavi "Send products" / "Ürünleri gönder" butonu
+            page.mouse.click(200, 600, delay=150)
+            page.wait_for_timeout(3500)
+
+            screenshot(page, "02_urunler_gonderildi", "🚚 ADIM 2: Ürünler gönderildi")
 
             browser.close()
 

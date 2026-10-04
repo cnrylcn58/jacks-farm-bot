@@ -56,23 +56,28 @@ def run():
             page.mouse.click(280, 290, delay=100)
             page.wait_for_timeout(3000)
             
-            # 2. ADIM: Mavi 'Send products' butonuna tam nokta tıklaması
+            # 2. ADIM: Mavi 'Send products' butonunun TAM ORTASINA tıklama
             print("Send products butonuna basılıyor...")
-            page.mouse.click(200, 715, delay=100)
-            page.wait_for_timeout(3000)
+            page.mouse.click(200, 735, delay=150)
+            page.wait_for_timeout(3500)
             
-            # 3. ADIM: Depo penceresini kırmızı X butonu ile kapatma
+            # 3. ADIM: Depo penceresini kapatma (Kırmızı X)
             print("Depo penceresi kapatılıyor...")
-            page.mouse.click(350, 445, delay=100)
+            page.mouse.click(350, 415, delay=150)
             page.wait_for_timeout(2000)
             
-            # Ana ekrana garanti geçiş için sağ dikey menüdeki Farm ikonuna tıklama
-            page.mouse.click(365, 180, delay=100)
+            # Ekranı temizlemek için boş alana tıklama (Sol taraf)
+            page.mouse.click(30, 400, delay=100)
+            page.wait_for_timeout(1500)
+            
+            # 4. ADIM: Sağ menüdeki Farm ikonuna tıklayarak ana çiftlik ekranına geçiş
+            print("Ana çiftlik ekranına dönülüyor...")
+            page.mouse.click(365, 605, delay=150)
             page.wait_for_timeout(2500)
             
-            # 4. ADIM: Sol üstteki 'Sell' (Satış) butonuna basma
+            # 5. ADIM: Sol üstteki 'Sell' (Satış) butonuna basma
             print("Sell butonuna basılıyor...")
-            page.mouse.click(220, 165, delay=100)
+            page.mouse.click(220, 165, delay=150)
             page.wait_for_timeout(2500)
 
             # Ekstra onay penceresi tıklaması

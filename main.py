@@ -48,42 +48,41 @@ def run():
             print(f"Oyuna bağlanılıyor: {GAME_URL}")
             page.goto(GAME_URL, wait_until="domcontentloaded", timeout=60000)
             
-            # Oyun ögelerinin yüklenmesi için bekleme
+            # Oyun nesnelerinin yüklenmesi için bekleme
             page.wait_for_timeout(10000)
             
-            # Ekranı temizle / Farm sekmesine geç
-            page.mouse.click(365, 605, delay=100)
+            # Ekranı temizleyip Ana Çiftlik moduna alma
+            print("Ana ekrana geçiliyor...")
+            page.mouse.click(365, 710, delay=100)
             page.wait_for_timeout(2000)
 
             # 1. ADIM: Depo (Warehouse) binasına tıklama
-            print("Warehouse (Depo) binasına tıklanıyor...")
+            print("Warehouse binasına tıklanıyor...")
             page.mouse.click(280, 290, delay=100)
-            page.wait_for_timeout(2500)
+            page.wait_for_timeout(3000)
             
-            # 2. ADIM: Mavi 'Send products' butonuna basma
+            # 2. ADIM: Mavi 'Send products' butonuna tam nokta basış
             print("Send products butonuna basılıyor...")
-            page.mouse.click(195, 660, delay=100)
+            page.mouse.click(195, 740, delay=100)
+            page.wait_for_timeout(3000)
+            
+            # 3. ADIM: Depo penceresini tamamen kapatma
+            print("Depo penceresi kapatılıyor...")
+            page.mouse.click(330, 450, delay=100)  # X ikonu
+            page.wait_for_timeout(1500)
+            page.mouse.click(365, 710, delay=100)  # Farm ikonu garanti geçiş
             page.wait_for_timeout(2500)
             
-            # 3. ADIM: Depo penceresini kırmızı X butonu ile kapatma
-            print("Depo penceresi kapatılıyor...")
-            page.mouse.click(335, 235, delay=100)
-            page.wait_for_timeout(1500)
-            
-            # Sağ menüden Farm ikonuna basarak ana ekrana kesin geçiş yapma
-            page.mouse.click(365, 605, delay=100)
-            page.wait_for_timeout(2000)
-            
-            # 4. ADIM: Sol üstteki kırmızı 'Sell' (Satış) butonuna basma
-            print("Sell (Satış) butonuna basılıyor...")
+            # 4. ADIM: Sol üstteki 'Sell' (Satış) butonuna basma
+            print("Sell butonuna basılıyor...")
             page.mouse.click(220, 165, delay=100)
             page.wait_for_timeout(2500)
 
-            # Ekstra Onay tıklaması (Eğer 'Sell All' açılırsa)
+            # Ekstra Onay Tıklaması (Açılır pencere onay alanı)
             page.mouse.click(195, 520, delay=100)
             page.wait_for_timeout(3000)
             
-            # Son durum ekran görüntüsünü alma
+            # Ekran görüntüsü alma
             screenshot_path = "result.png"
             page.screenshot(path=screenshot_path)
             send_telegram_photo(screenshot_path, caption="✅ Ürünler başarıyla gönderildi ve satıldı!")

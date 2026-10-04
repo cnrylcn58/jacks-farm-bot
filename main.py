@@ -46,23 +46,31 @@ def run():
             page = context.new_page()
             
             print(f"Oyuna bağlanılıyor: {GAME_URL}")
-            # domcontentloaded ile ağ yüklemelerinin tamamen bitmesini beklemeden devam eder (Timeout engelleyici)
             page.goto(GAME_URL, wait_until="domcontentloaded", timeout=60000)
             
-            # Sayfanın / Oyunun kendine gelmesi için 10 saniye bekleme
+            # Oyun ögelerinin tam yüklenmesi için bekleme
             page.wait_for_timeout(10000)
             
-            # 1. Adım: Depoya ürün aktarımı (Sağ ortadaki depoya tıklama)
+            # 1. ADIM: Promo / Teklif penceresini kapatma (Boşluğa tıklayarak pop-up'ı düşürme)
+            print("Promo penceresi temizleniyor...")
+            page.mouse.click(360, 150)  # Pencere dışı / kapatma alanı
+            page.wait_for_timeout(2000)
+            
+            # Sağ menüdeki 'Farm' ikonuna tıklayarak doğrudan çiftlik ekranına odaklanma
+            page.mouse.click(360, 710)
+            page.wait_for_timeout(2000)
+            
+            # 2. ADIM: Depoya tıklayıp ürünleri toplama
             print("Depoya ürünler aktarılıyor...")
-            page.mouse.click(320, 420)
+            page.mouse.click(320, 450)
             page.wait_for_timeout(3000)
             
-            # 2. Adım: Satış alanına tıklama (Sol üst/orta satış butonu)
+            # 3. ADIM: Satış butonuna basıp ürünleri nakde çevirme
             print("Satış işlemi yapılıyor...")
-            page.mouse.click(200, 280)
+            page.mouse.click(180, 280)
             page.wait_for_timeout(3000)
             
-            # İşlem sonrası ekran görüntüsü alıp Telegram'a yollayalım
+            # Son durumun ekran görüntüsünü alıp Telegram'a atalım
             screenshot_path = "result.png"
             page.screenshot(path=screenshot_path)
             send_telegram_photo(screenshot_path, caption="✅ Depo boşaltıldı ve satış yapıldı!")
@@ -76,3 +84,4 @@ def run():
 
 if __name__ == "__main__":
     run()
+    

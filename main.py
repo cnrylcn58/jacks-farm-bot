@@ -51,22 +51,22 @@ def run():
             # Oyun ögelerinin yüklenmesi için bekleme
             page.wait_for_timeout(10000)
 
-            # 1. ADIM: Warehouse (Depo) binasına tıklama
+            # 1. ADIM: Depo (Warehouse) binasına tıklama
             print("Warehouse binasına tıklanıyor...")
             page.mouse.click(280, 290, delay=100)
             page.wait_for_timeout(2500)
             
-            # 2. ADIM: Mavi 'Send products' butonuna basma (Çalıştığı doğrulandı)
+            # 2. ADIM: Mavi 'Send products' butonuna tıklama
             print("Send products butonuna basılıyor...")
             page.mouse.click(195, 660, delay=100)
             page.wait_for_timeout(2500)
             
-            # 3. ADIM: Depo penceresini kırmızı X butonu ile kapatma (Kesişen koordinat güncellendi)
+            # 3. ADIM: Depo penceresini sağ üstteki kırmızı X butonuyla kapatma
             print("Depo penceresi kapatılıyor...")
             page.mouse.click(350, 235, delay=100)
             page.wait_for_timeout(2000)
             
-            # Eğer X tıklaması kaçarsa diye sağ taraftaki 'Farm' sekmesine ekstra tıklama
+            # Pencere kapanmazsa garanti geçiş için sağ taraftaki Farm ikonuna tıklama
             page.mouse.click(365, 605, delay=100)
             page.wait_for_timeout(2000)
             
@@ -75,14 +75,14 @@ def run():
             page.mouse.click(220, 165, delay=100)
             page.wait_for_timeout(2500)
 
-            # Satış sonrası açılabilecek onay penceresi tıklaması
+            # Satış onay penceresi tıklaması
             page.mouse.click(195, 520, delay=100)
             page.wait_for_timeout(3000)
             
-            # Ekran görüntüsü alma
+            # Ekran görüntüsü alma ve gönderme
             screenshot_path = "result.png"
             page.screenshot(path=screenshot_path)
-            send_telegram_photo(screenshot_path, caption="✅ Ürünler depodan gönderildi, pencere kapatıldı ve satış yapıldı!")
+            send_telegram_photo(screenshot_path, caption="✅ Depo boşaltıldı, pencere kapatıldı ve satış işlemi tamamlandı!")
             
             browser.close()
             

@@ -51,26 +51,27 @@ def run():
             # Oyun ögelerinin tam yüklenmesi için bekleme
             page.wait_for_timeout(10000)
             
-            # 1. ADIM: Promo / Teklif penceresini kapatma (Boşluğa tıklayarak pop-up'ı düşürme)
-            print("Promo penceresi temizleniyor...")
-            page.mouse.click(360, 150)  # Pencere dışı / kapatma alanı
+            # 1. ADIM: Ekranda açık kalan Pop-Up veya Payout menülerini kapatma
+            print("Pencereler temizleniyor...")
+            page.mouse.click(360, 100)
             page.wait_for_timeout(2000)
             
-            # Sağ menüdeki 'Farm' ikonuna tıklayarak doğrudan çiftlik ekranına odaklanma
-            page.mouse.click(360, 710)
+            # 2. ADIM: Sağ menüdeki "Farm" ikonuna tıklayarak Ana Çiftlik ekranına geçiş yapma
+            print("Çiftlik ekranına geçiliyor...")
+            page.mouse.click(365, 715)
             page.wait_for_timeout(2000)
             
-            # 2. ADIM: Depoya tıklayıp ürünleri toplama
+            # 3. ADIM: Depoya tıklayıp ürünleri toplama
             print("Depoya ürünler aktarılıyor...")
-            page.mouse.click(320, 450)
+            page.mouse.click(320, 480)
             page.wait_for_timeout(3000)
             
-            # 3. ADIM: Satış butonuna basıp ürünleri nakde çevirme
+            # 4. ADIM: Satış butonuna basıp ürünleri satma
             print("Satış işlemi yapılıyor...")
-            page.mouse.click(180, 280)
+            page.mouse.click(180, 350)
             page.wait_for_timeout(3000)
             
-            # Son durumun ekran görüntüsünü alıp Telegram'a atalım
+            # Son durumun ekran görüntüsünü alıp Telegram'a gönderelim
             screenshot_path = "result.png"
             page.screenshot(path=screenshot_path)
             send_telegram_photo(screenshot_path, caption="✅ Depo boşaltıldı ve satış yapıldı!")
@@ -84,4 +85,3 @@ def run():
 
 if __name__ == "__main__":
     run()
-    

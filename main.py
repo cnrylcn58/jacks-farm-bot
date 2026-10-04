@@ -56,17 +56,17 @@ def run():
             page.mouse.click(280, 290, delay=100)
             page.wait_for_timeout(3000)
             
-            # 2. ADIM: Mavi 'Send products' butonuna nokta atışı basma
+            # 2. ADIM: Mavi 'Send products' butonuna tam nokta tıklaması
             print("Send products butonuna basılıyor...")
-            page.mouse.click(200, 755, delay=100)
+            page.mouse.click(200, 715, delay=100)
             page.wait_for_timeout(3000)
             
-            # 3. ADIM: Depo penceresini kapatma (Kırmızı X butonu)
+            # 3. ADIM: Depo penceresini kırmızı X butonu ile kapatma
             print("Depo penceresi kapatılıyor...")
-            page.mouse.click(350, 430, delay=100)
-            page.wait_for_timeout(1500)
+            page.mouse.click(350, 445, delay=100)
+            page.wait_for_timeout(2000)
             
-            # Ana ekrana garanti geçiş için Farm ikonuna basma
+            # Ana ekrana garanti geçiş için sağ dikey menüdeki Farm ikonuna tıklama
             page.mouse.click(365, 180, delay=100)
             page.wait_for_timeout(2500)
             
@@ -82,7 +82,7 @@ def run():
             # Ekran görüntüsü alma ve Telegram'a gönderme
             screenshot_path = "result.png"
             page.screenshot(path=screenshot_path)
-            send_telegram_photo(screenshot_path, caption="✅ Ürünler başarıyla depodan gönderildi ve satış tamamlandı!")
+            send_telegram_photo(screenshot_path, caption="✅ Depodaki ürünler gönderildi, pencere kapatıldı ve satış tamamlandı!")
             
             browser.close()
             

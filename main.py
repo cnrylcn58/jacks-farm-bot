@@ -1,4 +1,5 @@
 import os
+import time
 import requests
 from playwright.sync_api import sync_playwright
 
@@ -108,12 +109,12 @@ def run():
             # 1. DEPO
             # ==================================================
 
-            print("📦 1/4 - Depo açılıyor...")
+            print("📦 1/5 - Depo açılıyor...")
 
-            # Sağ taraftaki DEPO butonu
+            # Depo (Warehouse) binasına tıklama
             page.mouse.click(
-                320,
-                365,
+                280,
+                290,
                 delay=150
             )
 
@@ -122,69 +123,74 @@ def run():
             screenshot(
                 page,
                 "01_depo",
-                "📦 Depo açıldı."
+                "📦 Depo penceresi açıldı."
             )
 
             # ==================================================
             # 2. ÜRÜNLERİ GÖNDER
             # ==================================================
 
-            print("🚚 2/4 - Ürünleri gönderiliyor...")
+            print("🚚 2/5 - Ürünler gönderiliyor...")
 
-            # Mavi "Ürünleri gönder" butonu
-            #
-            # DİKKAT:
-            # Bu konum, senin söylediğin gibi
-            # 5. aşamadaki ikinci SAT butonuyla aynı.
+            # Mavi "Send products" butonu
             page.mouse.click(
-                195,
-                435,
+                200,
+                735,
                 delay=150
             )
 
-            page.wait_for_timeout(5000)
+            page.wait_for_timeout(3500)
 
             screenshot(
                 page,
                 "02_urunler_gonderildi",
-                "🚚 Ürünleri gönder butonuna basıldı."
+                "🚚 Send products butonuna basıldı."
             )
 
             # ==================================================
             # 3. DEPOYU KAPAT
             # ==================================================
 
-            print("❌ 3/4 - Depo kapatılıyor...")
+            print("❌ 3/5 - Depo kapatılıyor...")
 
-            # Depo penceresindeki X
+            # Depo penceresindeki kırmızı X butonu
             page.mouse.click(
                 350,
-                65,
+                415,
                 delay=150
             )
 
-            page.wait_for_timeout(2500)
+            page.wait_for_timeout(2000)
+
+            # Ana ekrana garanti geçiş için Farm ikonu
+            page.mouse.click(
+                365,
+                180,
+                delay=150
+            )
+
+            page.wait_for_timeout(2000)
 
             screenshot(
                 page,
                 "03_ana_sayfa",
-                "🏡 Ana çiftliğe dönüldü."
+                "🏡 Ana çiftlik ekranına dönüldü."
             )
 
             # ==================================================
             # 4. İLK SAT
             # ==================================================
 
-            print("🛒 4/4 - İlk Sat butonuna basılıyor...")
+            print("🛒 4/5 - Sol üstteki Sell butonuna basılıyor...")
 
-            # Ana sayfanın sol üstündeki kırmızı SAT
+            # Sol üstteki kırmızı Sell (Satış) butonu
             page.mouse.click(
-                90,
-                240,
+                220,
+                165,
                 delay=150
             )
 
-            page.wait_for_timeout(3000)
+            page.wait_for_timeout(2500)
 
             screenshot(
                 page,
@@ -193,35 +199,33 @@ def run():
             )
 
             # ==================================================
-            # 5. İKİNCİ SAT
+            # 5. İKİNCİ SAT (ONAY)
             # ==================================================
 
-            print("💰 5/5 - İkinci Sat butonuna basılıyor...")
+            print("💰 5/5 - Satış onayına basılıyor...")
 
-            # Senin belirttiğin gibi:
-            # Bu buton, DEPO içindeki "Ürünleri gönder"
-            # butonuyla AYNI KONUMDA.
+            # Açılan satış modalındaki onay noktası
             page.mouse.click(
                 195,
-                435,
+                520,
                 delay=150
             )
 
-            page.wait_for_timeout(5000)
+            page.wait_for_timeout(3000)
 
             screenshot(
                 page,
                 "05_satis_tamamlandi",
-                "✅ İkinci Sat butonuna basıldı, satış tamamlandı."
+                "✅ Satış işlemi onaylandı ve tamamlandı."
             )
 
             send_telegram_message(
-                "✅ Çiftlik işlemi tamamlandı!\n\n"
+                "✅ Çiftlik işlemi başarıyla tamamlandı!\n\n"
                 "📦 Depo açıldı\n"
-                "🚚 Ürünleri gönderildi\n"
+                "🚚 Ürünler gönderildi\n"
                 "🏡 Ana sayfaya dönüldü\n"
-                "🛒 İlk Sat'a basıldı\n"
-                "💰 İkinci Sat'a basıldı"
+                "🛒 Satış penceresi açıldı\n"
+                "💰 Satış onaylandı"
             )
 
             browser.close()

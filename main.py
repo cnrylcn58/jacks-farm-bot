@@ -106,15 +106,15 @@ def run():
             )
 
             # ==================================================
-            # 1. DEPO
+            # 1. DEPO AÇ
             # ==================================================
 
             print("📦 1/5 - Depo açılıyor...")
 
-            # Depo (Warehouse) binasına tıklama
+            # Depo Binasına Tıklama
             page.mouse.click(
-                280,
-                290,
+                365,
+                350,
                 delay=150
             )
 
@@ -132,10 +132,10 @@ def run():
 
             print("🚚 2/5 - Ürünler gönderiliyor...")
 
-            # Mavi "Send products" butonu
+            # Mavi "Send products" Butonu
             page.mouse.click(
                 200,
-                735,
+                560,
                 delay=150
             )
 
@@ -153,44 +153,35 @@ def run():
 
             print("❌ 3/5 - Depo kapatılıyor...")
 
-            # Depo penceresindeki kırmızı X butonu
+            # Kırmızı X Butonu
             page.mouse.click(
                 350,
-                415,
-                delay=150
-            )
-
-            page.wait_for_timeout(2000)
-
-            # Ana ekrana garanti geçiş için Farm ikonu
-            page.mouse.click(
-                365,
-                180,
-                delay=150
-            )
-
-            page.wait_for_timeout(2000)
-
-            screenshot(
-                page,
-                "03_ana_sayfa",
-                "🏡 Ana çiftlik ekranına dönüldü."
-            )
-
-            # ==================================================
-            # 4. İLK SAT
-            # ==================================================
-
-            print("🛒 4/5 - Sol üstteki Sell butonuna basılıyor...")
-
-            # Sol üstteki kırmızı Sell (Satış) butonu
-            page.mouse.click(
-                220,
-                165,
+                290,
                 delay=150
             )
 
             page.wait_for_timeout(2500)
+
+            screenshot(
+                page,
+                "03_ana_sayfa",
+                "🏡 Depo kapatıldı, ana çiftlik ekranına dönüldü."
+            )
+
+            # ==================================================
+            # 4. İLK SAT (SELL)
+            # ==================================================
+
+            print("🛒 4/5 - Sol üstteki Sell butonuna basılıyor...")
+
+            # Sol üst Kırmızı Sell Butonu
+            page.mouse.click(
+                120,
+                260,
+                delay=150
+            )
+
+            page.wait_for_timeout(3000)
 
             screenshot(
                 page,
@@ -204,10 +195,10 @@ def run():
 
             print("💰 5/5 - Satış onayına basılıyor...")
 
-            # Açılan satış modalındaki onay noktası
+            # Açılan penceredeki Onay/Satış Butonu
             page.mouse.click(
                 195,
-                520,
+                560,
                 delay=150
             )
 

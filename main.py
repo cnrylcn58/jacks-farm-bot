@@ -48,27 +48,37 @@ def run():
             print(f"Oyuna bağlanılıyor: {GAME_URL}")
             page.goto(GAME_URL, wait_until="domcontentloaded", timeout=60000)
             
-            # Oyun elemanlarının tam yüklenmesi için bekleme
+            # Oyun ögelerinin tam yüklenmesi için bekleme
             page.wait_for_timeout(10000)
             
-            # 1. ADIM: Depoya (Warehouse) tıklayıp ürünleri banda/depoya aktarma
+            # 1. ADIM: Depo (Warehouse) binasına tıklama
             print("Warehouse (Depo) binasına tıklanıyor...")
             page.mouse.click(280, 290)
-            page.wait_for_timeout(3000)
+            page.wait_for_timeout(2500)
             
-            # 2. ADIM: Sol üstteki kırmızı 'Sell' (Satış) butonuna basma
+            # 2. ADIM: Depo penceresindeki 'Send products' butonuna basma
+            print("Send products butonuna basılıyor...")
+            page.mouse.click(200, 660)
+            page.wait_for_timeout(2500)
+            
+            # 3. ADIM: Depo penceresini kapatma (X butonu)
+            print("Depo penceresi kapatılıyor...")
+            page.mouse.click(360, 235)
+            page.wait_for_timeout(2000)
+            
+            # 4. ADIM: Sol üstteki kırmızı 'Sell' (Satış) butonuna basma
             print("Sell (Satış) butonuna basılıyor...")
             page.mouse.click(220, 165)
             page.wait_for_timeout(2000)
 
-            # Ekstra Onay tıklaması (Eğer 'Sell All' gibi pop-up açılırsa ortadaki butona basar)
+            # Ekstra Onay Tıklaması (Satış penceresi onay butonu için)
             page.mouse.click(195, 520)
             page.wait_for_timeout(3000)
             
             # Son durum ekran görüntüsünü alma
             screenshot_path = "result.png"
             page.screenshot(path=screenshot_path)
-            send_telegram_photo(screenshot_path, caption="✅ Depo boşaltıldı ve satış yapıldı!")
+            send_telegram_photo(screenshot_path, caption="✅ Depodaki ürünler gönderildi ve satış yapıldı!")
             
             browser.close()
             

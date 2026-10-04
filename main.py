@@ -69,9 +69,8 @@ def run():
             # 1. Tıklamadan önceki ekran
             screenshot(page, "00_tiklama_oncesi", "🏡 1. Tıklama öncesi ana ekran")
 
-            # Depo Binasına Tıkla
-            # Mavi "Warehouse" / "Depo" butonunun/binasının merkezi
-            page.mouse.click(200, 310, delay=150)
+            # Depo Binasına Tıkla (Y ekseni yukarı çekildi)
+            page.mouse.click(200, 160, delay=150)
             page.wait_for_timeout(3000)
 
             # 2. Tıklamadan sonraki ekran
@@ -85,4 +84,3 @@ def run():
 
 if __name__ == "__main__":
     run()
-    

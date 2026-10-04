@@ -51,27 +51,24 @@ def run():
             # Oyun ögelerinin tam yüklenmesi için bekleme
             page.wait_for_timeout(10000)
             
-            # 1. ADIM: Ekranda açık kalan Pop-Up veya Payout menülerini kapatma
+            # 1. ADIM: Pencereleri kapatıp Farm ekranına geçme
             print("Pencereler temizleniyor...")
             page.mouse.click(360, 100)
-            page.wait_for_timeout(2000)
-            
-            # 2. ADIM: Sağ menüdeki "Farm" ikonuna tıklayarak Ana Çiftlik ekranına geçiş yapma
-            print("Çiftlik ekranına geçiliyor...")
+            page.wait_for_timeout(1500)
             page.mouse.click(365, 715)
             page.wait_for_timeout(2000)
             
-            # 3. ADIM: Depoya tıklayıp ürünleri toplama
+            # 2. ADIM: Depoya (Warehouse) tıklayıp ürünleri toplama
             print("Depoya ürünler aktarılıyor...")
-            page.mouse.click(320, 480)
+            page.mouse.click(230, 240)
             page.wait_for_timeout(3000)
             
-            # 4. ADIM: Satış butonuna basıp ürünleri satma
+            # 3. ADIM: Satış binasına tıklayıp nakde çevirme
             print("Satış işlemi yapılıyor...")
-            page.mouse.click(180, 350)
+            page.mouse.click(180, 220)
             page.wait_for_timeout(3000)
             
-            # Son durumun ekran görüntüsünü alıp Telegram'a gönderelim
+            # Son durum ekran görüntüsünü alma
             screenshot_path = "result.png"
             page.screenshot(path=screenshot_path)
             send_telegram_photo(screenshot_path, caption="✅ Depo boşaltıldı ve satış yapıldı!")

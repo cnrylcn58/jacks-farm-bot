@@ -35,39 +35,22 @@ def send_telegram_photo(path, caption=""):
         print("Fotoğraf gönderme hatası:", e)
 
 
-def draw_click_marker(page, x, y):
-    """Ekran görüntüsünde tıklanan yeri kırmızı daire ile işaretler."""
-    js_code = f"""
-    (() => {{
-        let marker = document.createElement('div');
-        marker.style.position = 'fixed';
-        marker.style.left = '{x - 12}px';
-        marker.style.top = '{y - 12}px';
-        marker.style.width = '24px';
-        marker.style.height = '24px';
-        marker.style.backgroundColor = 'rgba(255, 0, 0, 0.8)';
-        marker.style.borderRadius = '50%';
-        marker.style.border = '3px solid white';
-        marker.style.zIndex = '999999';
-        marker.style.pointerEvents = 'none';
-        document.body.appendChild(marker);
-    }})();
-    """
-    try:
-        page.evaluate(js_code)
-    except Exception as e:
-        print("İşaretçi ekleme hatası:", e)
-
-
 def screenshot(page, name, caption):
     path = f"{name}.png"
     page.screenshot(path=path)
     send_telegram_photo(path, caption)
 
 
+def click_step(page, x, y, caption, step_name):
+    """Verilen koordinata tıklar ve sonrasında ekran görüntüsü alır."""
+    page.mouse.click(x, y, delay=150)
+    page.wait_for_timeout(3500)
+    screenshot(page, step_name, f"✅ {caption}")
+
+
 def run():
-    print("🤖 Çiftlik Botu - Sıfırdan Adım 1 (Kırmızı Nokta Testi)")
-    send_telegram_message("🤖 ADIM 1: Oyuna giriliyor ve Depo tıklaması test ediliyor...")
+    print("🤖 Çiftlik Botu - Çalıştırılıyor (390x844)")
+    send_telegram_message("🤖 Çiftlik Botu Başlatılıyor...")
 
     if not GAME_URL:
         send_telegram_message("❌ GAME_URL tanımlanmamış.")
@@ -86,30 +69,38 @@ def run():
             )
             page = context.new_page()
 
-            # 1. Oyuna Bağlan
+            # Oyuna Bağlan
             page.goto(GAME_URL, wait_until="domcontentloaded", timeout=60000)
             page.wait_for_timeout(10000)
 
-            # İlk görünüm görüntüsü
-            screenshot(page, "00_ilk_acilis", "🏡 1. Oyun ilk açıldığındaki durum")
+            screenshot(page, "00_ilk_acilis", "🏡 Oyuna bağlanıldı")
 
-            # 2. Tıklanacak Koordinat (Varsayılan Deneme: X=282, Y=253)
-            target_x = 282
-            target_y = 253
+            # --------------------------------------------------
+            # 1. Depo (Warehouse) -> (282, 253)
+            # --------------------------------------------------
+            click_step(page, 282, 253, "Depo (Warehouse) tıklandı", "01_depo")
 
-            # Kırmızı nokta koy
-            draw_click_marker(page, target_x, target_y)
+            # --------------------------------------------------
+            # 2. Ürünleri Gönder (Send products) -> (195, 570)
+            # --------------------------------------------------
+            click_step(page, 195, 570, "Ürünleri Gönder (Send products) tıklandı", "02_urunler_gonderildi")
 
-            # Tıklamadan önceki kırmızı noktalı görüntüyü gönder
-            screenshot(page, "01_nokta_konumu", f"📍 Tıklanacak Nokta: ({target_x}, {target_y})")
+            # --------------------------------------------------
+            # 3. Market (Shop) -> (280, 130)
+            # --------------------------------------------------
+            click_step(page, 280, 130, "Market (Shop) tıklandı", "03_market")
 
-            # Tıkla
-            page.mouse.click(target_x, target_y, delay=150)
-            page.wait_for_timeout(3500)
+            # --------------------------------------------------
+            # 4. Sat (Sell) -> (195, 570)
+            # --------------------------------------------------
+            click_step(page, 195, 570, "Sat (Sell) tıklandı", "04_satıldı")
 
-            # Tıklama sonrası ekranı gönder
-            screenshot(page, "02_tiklama_sonrasi", "📦 Tıklama sonrası ekran durumu")
+            # --------------------------------------------------
+            # 5. X Butonu -> (350, 200)
+            # --------------------------------------------------
+            click_step(page, 350, 200, "X Butonu tıklandı (Anasayfa)", "05_kapatildi")
 
+            send_telegram_message("🎉 Bütün adımlar başarıyla tamamlandı!")
             browser.close()
 
     except Exception as e:

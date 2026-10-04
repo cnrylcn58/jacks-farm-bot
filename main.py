@@ -77,15 +77,27 @@ def screenshot(page, name, caption):
     send_telegram_photo(path, caption)
 
 
-def click_and_capture(page, x, y, caption_prefix, step_name):
+def handle_error_popups(page):
+    """Eğer 'Oops!' hatası veya 'Got it' butonu varsa tıklar."""
+    try:
+        page.mouse.click(195, 515, delay=150)
+        page.wait_for_timeout(2000)
+    except Exception:
+        pass
+
+
+def click_and_capture(page, x, y, caption_prefix, step_name, wait_time=4000):
     """Verilen koordinata tıklar, öncesinde kırmızı nokta koyup fotoğraf çeker."""
+    # Olası pop-up temizleme
+    handle_error_popups(page)
+
     # Kırmızı nokta koy
     draw_click_marker(page, x, y)
     screenshot(page, f"{step_name}_nokta", f"📍 {caption_prefix} -> Tıklanacak Nokta: ({x}, {y})")
     
     # Tıkla
     page.mouse.click(x, y, delay=150)
-    page.wait_for_timeout(3500)
+    page.wait_for_timeout(wait_time)
     
     # Noktayı kaldırıp işlem sonrası ekranı çek
     remove_marker(page)
@@ -93,8 +105,8 @@ def click_and_capture(page, x, y, caption_prefix, step_name):
 
 
 def run():
-    print("🤖 Çiftlik Botu - Tam Adım Testi (390x844)")
-    send_telegram_message("🤖 Çiftlik Botu Başlatılıyor (390x844 çözünürlük)...")
+    print("🤖 Çiftlik Botu - Kırmızı Noktalı Tam Adım Testi")
+    send_telegram_message("🤖 Çiftlik Botu Başlatılıyor...")
 
     if not GAME_URL:
         send_telegram_message("❌ GAME_URL tanımlanmamış.")
@@ -115,9 +127,12 @@ def run():
 
             # Oyuna Bağlan
             page.goto(GAME_URL, wait_until="domcontentloaded", timeout=60000)
-            page.wait_for_timeout(10000)
+            page.wait_for_timeout(12000)
 
-            screenshot(page, "00_ilk_acilis", "🏡 Oyuna bağlanıldı")
+            # İlk açılıştaki olası Oops! hatasını temizle
+            handle_error_popups(page)
+
+            screenshot(page, "00_ilk_acilis", "🏡 Oyuna bağlanıldı (İlk ekran)")
 
             # --------------------------------------------------
             # ADIM 1: Depo (Warehouse) -> (282, 253)
@@ -127,7 +142,8 @@ def run():
                 x=282, 
                 y=253, 
                 caption_prefix="ADIM 1: Depo (Warehouse)", 
-                step_name="01_depo"
+                step_name="01_depo",
+                wait_time=4000
             )
 
             # --------------------------------------------------
@@ -138,7 +154,8 @@ def run():
                 x=195, 
                 y=570, 
                 caption_prefix="ADIM 2: Ürünleri gönder (Send products)", 
-                step_name="02_urunleri_gonder"
+                step_name="02_urunleri_gonder",
+                wait_time=5000
             )
 
             # --------------------------------------------------
@@ -149,7 +166,8 @@ def run():
                 x=280, 
                 y=130, 
                 caption_prefix="ADIM 3: Market (Shop)", 
-                step_name="03_market"
+                step_name="03_market",
+                wait_time=4000
             )
 
             # --------------------------------------------------
@@ -160,7 +178,8 @@ def run():
                 x=195, 
                 y=570, 
                 caption_prefix="ADIM 4: Sat (Sell)", 
-                step_name="04_sat"
+                step_name="04_sat",
+                wait_time=5000
             )
 
             # --------------------------------------------------
@@ -171,7 +190,8 @@ def run():
                 x=350, 
                 y=200, 
                 caption_prefix="ADIM 5: X Butonu ile Anasayfa", 
-                step_name="05_kapat"
+                step_name="05_kapat",
+                wait_time=3000
             )
 
             send_telegram_message("🎉 Bütün adımlar başarıyla tamamlandı!")

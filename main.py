@@ -35,6 +35,30 @@ def send_telegram_photo(path, caption=""):
         print("Fotoğraf gönderme hatası:", e)
 
 
+def draw_click_marker(page, x, y):
+    """Ekran görüntüsünde tıklanan yeri görmek için kırmızı nokta koyar."""
+    js_code = f"""
+    (() => {{
+        let marker = document.createElement('div');
+        marker.style.position = 'fixed';
+        marker.style.left = '{x - 10}px';
+        marker.style.top = '{y - 10}px';
+        marker.style.width = '20px';
+        marker.style.height = '20px';
+        marker.style.backgroundColor = 'red';
+        marker.style.borderRadius = '50%';
+        marker.style.border = '2px solid white';
+        marker.style.zIndex = '999999';
+        marker.style.pointerEvents = 'none';
+        document.body.appendChild(marker);
+    }})();
+    """
+    try:
+        page.evaluate(js_code)
+    except Exception:
+        pass
+
+
 def screenshot(page, name, caption):
     path = f"{name}.png"
     page.screenshot(path=path)
@@ -42,8 +66,8 @@ def screenshot(page, name, caption):
 
 
 def run():
-    print("🤖 Çiftlik Botu - 540x1200 Çözünürlük Testi")
-    send_telegram_message("🤖 Oyuna bağlanılıyor (540x1200 çözünürlüğü ile)...")
+    print("🤖 Çiftlik Botu - Depo Tıklama Testi (780, 220)")
+    send_telegram_message("🤖 ADIM 1: Depo (780, 220) tıklanıyor...")
 
     if not GAME_URL:
         send_telegram_message("❌ GAME_URL tanımlanmamış.")
@@ -52,7 +76,6 @@ def run():
     try:
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=True)
-            # Ekran çözünürlüğünü 540x1200 olarak sabitliyoruz
             context = browser.new_context(
                 viewport={"width": 540, "height": 1200},
                 user_agent=(
@@ -67,15 +90,20 @@ def run():
             page.goto(GAME_URL, wait_until="domcontentloaded", timeout=60000)
             page.wait_for_timeout(10000)
 
-            # İlk Durum Fotoğrafı
-            screenshot(page, "00_ekran_540x1200", "🏡 540x1200 Ekran Goruntusu")
+            # 1. Tıklamadan önceki görünüm
+            screenshot(page, "00_baslangic", "🏡 İlk açılış ekranı")
 
-            # 540x1200 çözünürlüğünde kaydırmasız ekranda Depo Binası koordinatı:
-            # (X: 300, Y: 420 civarı)
-            page.mouse.click(300, 420, delay=150)
+            # 2. (780, 220) Koordinatına Tıkla
+            target_x, target_y = 780, 220
+            
+            # Görselde nereye tıklandığını göstermek için işaretçi ekle
+            draw_click_marker(page, target_x, target_y)
+            
+            page.mouse.click(target_x, target_y, delay=150)
             page.wait_for_timeout(3500)
 
-            screenshot(page, "01_depo_540x1200", "📦 Depo tıklama sonrası")
+            # 3. Tıklama sonrası görünüm
+            screenshot(page, "01_depo_tiklandi", f"📦 Tıklama Yapıldı ({target_x}, {target_y})")
 
             browser.close()
 

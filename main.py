@@ -48,29 +48,24 @@ def run():
             print(f"Oyuna bağlanılıyor: {GAME_URL}")
             page.goto(GAME_URL, wait_until="domcontentloaded", timeout=60000)
             
-            # Oyun ögelerinin tam yüklenmesi için bekleme
+            # Oyun elemanlarının tam yüklenmesi için bekleme
             page.wait_for_timeout(10000)
             
-            # 1. ADIM: Açık olan Shop / Promo / Payout ekranını kapatıp Farm'a geçme
-            print("Sağ menüdeki Farm butonuna basılıyor...")
-            page.mouse.click(365, 605)  # Sağ menüdeki 'Farm' ikonu
-            page.wait_for_timeout(2500)
-            
-            # Ekstra garanti: Sağ alt taraftaki menü kapatma oku / boşluk alanı
-            page.mouse.click(360, 820)
-            page.wait_for_timeout(1500)
-            
-            # 2. ADIM: Kırmızı Depo (Warehouse) binasına tıklama
-            print("Depoya ürünler aktarılıyor...")
-            page.mouse.click(230, 480)  # Depo binasının tam üstü
+            # 1. ADIM: Depoya (Warehouse) tıklayıp ürünleri banda/depoya aktarma
+            print("Warehouse (Depo) binasına tıklanıyor...")
+            page.mouse.click(280, 290)
             page.wait_for_timeout(3000)
             
-            # 3. ADIM: Sol taraftaki Satış/Pazar binasına tıklama
-            print("Satış işlemi yapılıyor...")
-            page.mouse.click(180, 420)  # Satış/Kamyon alanı
+            # 2. ADIM: Sol üstteki kırmızı 'Sell' (Satış) butonuna basma
+            print("Sell (Satış) butonuna basılıyor...")
+            page.mouse.click(220, 165)
+            page.wait_for_timeout(2000)
+
+            # Ekstra Onay tıklaması (Eğer 'Sell All' gibi pop-up açılırsa ortadaki butona basar)
+            page.mouse.click(195, 520)
             page.wait_for_timeout(3000)
             
-            # Son durumun ekran görüntüsünü alıp Telegram'a atalım
+            # Son durum ekran görüntüsünü alma
             screenshot_path = "result.png"
             page.screenshot(path=screenshot_path)
             send_telegram_photo(screenshot_path, caption="✅ Depo boşaltıldı ve satış yapıldı!")

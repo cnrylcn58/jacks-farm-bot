@@ -139,7 +139,7 @@ def run():
             if not clicked:
                 try:
                     page.locator("button").first.click(force=True)
-                    print("⚠️ Varsayılan ilk butona tıklandı.")
+                    print("⚠️️ Varsayılan ilk butona tıklandı.")
                 except Exception as e:
                     send_telegram_message(f"❌ Başlatma butonu bulunamadı: {e}")
                     return
@@ -220,10 +220,13 @@ def run():
             click_and_capture(game_page, 280, 130, "ADIM 4: Satış Tabı Seçiliyor", "04_satis_tabi", wait_time=3000)
 
             # ADIM 5: Sat Butonu (Sell) -> (195, 570)
-            click_and_capture(game_page, 195, 570, "ADIM 5: Ürünler Satılıyor", "05_sat_onay", wait_time=5000)
+            click_and_capture(game_page, 195, 570, "ADIM 5: Ürünler Satılıyor", "05_sat_onay", wait_time=4000)
 
-            # ADIM 6: Kapat X Butonu -> (350, 200)
-            click_and_capture(game_page, 350, 200, "ADIM 6: X Butonu ile Anasayfaya Dönüş", "06_kapat", wait_time=3000)
+            # ADIM 6: Success Bildirim Penceresini Kapat -> (310, 215)
+            click_and_capture(game_page, 310, 215, "ADIM 6: Success Bildirimi Kapatılıyor", "06_success_kapat", wait_time=2500)
+
+            # ADIM 7: Ana Shop/Sell Ekranını Kapat -> (335, 85)
+            click_and_capture(game_page, 335, 85, "ADIM 7: Shop Ekranı Kapatılıyor", "07_shop_kapat", wait_time=3000)
 
             send_telegram_message("🎉 Bütün adımlar başarıyla tamamlandı!")
             browser.close()

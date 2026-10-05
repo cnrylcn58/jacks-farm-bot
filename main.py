@@ -109,17 +109,43 @@ def run():
             page = context.new_page()
             print(f"🔗 Bot sohbetine gidiliyor: {TELEGRAM_GAME_BOT_URL}")
             page.goto(TELEGRAM_GAME_BOT_URL, wait_until="domcontentloaded", timeout=60000)
-            page.wait_for_timeout(8000)
-
-            # 2. Oyunu Başlatan Butona Tıkla (Play / Oyna / Start / Launch)
-            print("🎮 Oyunu başlatan buton aranıyor...")
-            try:
-                page.click("text=/Play|Oyna|Start|Launch/i", timeout=20000)
-            except Exception:
-                # Alternatif tıklama: Telegram K arayüzündeki inline butonları yakalar
-                page.locator(".reply-markup-button, .btn-primary").first.click(timeout=10000)
             
-            page.wait_for_timeout(8000)
+            # Sohbetin ve butonların yüklenmesi için bekleme süresi
+            page.wait_for_timeout(10000)
+
+            # 2. Oyunu Başlatan Butona Tıkla (Gelişmiş Tıklama Mantığı)
+            print("🎮 Oyunu başlatan buton aranıyor...")
+            
+            button_selectors = [
+                "text=/Play|Oyna|Start|Launch/i",
+                ".reply-markup-button",
+                "button:has-text('Play')",
+                "button:has-text('Oyna')",
+                ".is-primary",
+                "a[href*='game']"
+            ]
+            
+            clicked = False
+            for selector in button_selectors:
+                try:
+                    loc = page.locator(selector).first
+                    if loc.is_visible(timeout=3000):
+                        loc.click(force=True)
+                        clicked = True
+                        print(f"✅ Butona başarıyla tıklandı: {selector}")
+                        break
+                except Exception:
+                    continue
+            
+            if not clicked:
+                try:
+                    page.locator("button").first.click(force=True)
+                    print("⚠️ Varsayılan ilk butona tıklandı.")
+                except Exception as e:
+                    send_telegram_message(f"❌ Başlatma butonu bulunamadı: {e}")
+                    return
+
+            page.wait_for_timeout(10000)
 
             # 3. İframe içerisinden taze GAME_URL adresini yakala
             iframe_element = page.locator("iframe").first

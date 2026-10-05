@@ -108,27 +108,32 @@ def run():
 
             page = context.new_page()
             print(f"🔗 Bot sohbetine gidiliyor: {TELEGRAM_GAME_BOT_URL}")
-            page.goto(TELEGRAM_GAME_BOT_URL, wait_until="domcontentloaded", timeout=60000)
+            page.goto(TELEGRAM_GAME_BOT_URL, wait_until="networkidle", timeout=60000)
             
             page.wait_for_timeout(10000)
 
-            # 2. Oyunu Başlatan Butona Tıkla
-            print("🎮 Oyunu başlatan buton aranıyor...")
+            # 2. Telegram Web "Open" ve "PLAY GAME" Butonlarına Tıklama
+            print("🎮 Oyunu başlatan 'Open' / 'PLAY GAME' butonu aranıyor...")
             
+            # Telegram Web K için özel tıklama seçicileri
             button_selectors = [
-                "text=/Play|Oyna|Start|Launch/i",
-                ".reply-markup-button",
-                "button:has-text('Play')",
-                "button:has-text('Oyna')",
-                ".is-primary",
-                "a[href*='game']"
+                ".chat-input-control-button",  # Sol alttaki mavi "Open" butonu
+                ".bot-menu-button",           # Bot menü butonu
+                "button.btn-icon:has-text('Open')",
+                "div.reply-markup-button",
+                "button:has-text('Open')",
+                "button:has-text('PLAY GAME')",
+                "div:has-text('PLAY GAME')",
+                "a:has-text('Open')",
+                "text='Open'",
+                "text='PLAY GAME'"
             ]
             
             clicked = False
             for selector in button_selectors:
                 try:
-                    loc = page.locator(selector).first
-                    if loc.is_visible(timeout=3000):
+                    loc = page.locator(selector).last
+                    if loc.is_visible(timeout=2000):
                         loc.click(force=True)
                         clicked = True
                         print(f"✅ Butona başarıyla tıklandı: {selector}")
@@ -136,26 +141,27 @@ def run():
                 except Exception:
                     continue
             
+            # Eğer seçiciler bulamazsa doğrudan sol alttaki "Open" mavi butonunun koordinatına tıkla
             if not clicked:
-                try:
-                    page.locator("button").first.click(force=True)
-                    print("⚠️️ Varsayılan ilk butona tıklandı.")
-                except Exception as e:
-                    send_telegram_message(f"❌ Başlatma butonu bulunamadı: {e}")
-                    return
+                print("⚠️ Seçiciler bulunamadı, doğrudan 'Open' butonunun koordinatına tıklanıyor...")
+                # 1280x720 masaüstü görünümünde sol alttaki Open butonunun tahmini konumu
+                page.mouse.click(360, 668)
+                page.wait_for_timeout(2000)
+                # Ayrıca mesaj içi 'PLAY GAME' butonunun koordinatı
+                page.mouse.click(550, 565)
 
-            page.wait_for_timeout(3000)
+            page.wait_for_timeout(4000)
 
-            # POP-UP ONAY PENCERESİ (LAUNCH / OPEN)
+            # 3. Pop-up Onay Penceresi (LAUNCH / OPEN / CONFIRM)
             print("💬 Onay penceresi (LAUNCH) kontrol ediliyor...")
             launch_selectors = [
                 "button:has-text('LAUNCH')",
                 "button:has-text('Launch')",
                 "button:has-text('OPEN')",
                 "button:has-text('Open')",
-                "button:has-text('OK')",
                 ".popup-button",
-                ".btn-primary"
+                ".btn-primary",
+                "button.btn-color-primary"
             ]
             
             for l_sel in launch_selectors:
@@ -163,17 +169,17 @@ def run():
                     l_btn = page.locator(l_sel).last
                     if l_btn.is_visible(timeout=3000):
                         l_btn.click(force=True)
-                        print(f"🚀 Pop-up 'LAUNCH' butonuna tıklandı: {l_sel}")
+                        print(f"🚀 Pop-up onay butonuna tıklandı: {l_sel}")
                         break
                 except Exception:
                     continue
 
-            page.wait_for_timeout(10000)
+            page.wait_for_timeout(12000)
 
-            # 3. İframe İçerisinden Taze Oyun Adresini Yakala
+            # 4. İframe İçerisinden Taze Oyun Adresini Yakala
             print("🔍 Oyun iframe adresi bekleniyor...")
             try:
-                page.wait_for_selector("iframe", timeout=25000)
+                page.wait_for_selector("iframe", timeout=35000)
                 iframe_element = page.locator("iframe").first
                 game_url = iframe_element.get_attribute("src")
             except Exception:
@@ -187,7 +193,7 @@ def run():
             print("✅ Taze oyun URL'si başarıyla yakalandı!")
             context.close()  # Masaüstü görünümünü kapatıyoruz
 
-            # 4. Yakalanan Taze URL ile Mobil Görünümde Oyunu Çalıştır
+            # 5. Yakalanan Taze URL ile Mobil Görünümde Oyunu Çalıştır
             mobile_context = browser.new_context(
                 viewport={"width": 390, "height": 844},
                 user_agent=(

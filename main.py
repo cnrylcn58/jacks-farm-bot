@@ -108,29 +108,30 @@ def run():
 
             page = context.new_page()
             print(f"🔗 Bot sohbetine gidiliyor: {TELEGRAM_GAME_BOT_URL}")
-            page.goto(TELEGRAM_GAME_BOT_URL, wait_until="networkidle", timeout=60000)
+            # domcontentloaded kullanarak ağın sakinleşmesini bekleme sorununu çözüyoruz
+            page.goto(TELEGRAM_GAME_BOT_URL, wait_until="domcontentloaded", timeout=60000)
             
-            page.wait_for_timeout(12000)
+            page.wait_for_timeout(10000)
 
-            # 2. Oyunu Başlatan Butona Tıkla
-            print("🎮 Oyunu başlatan buton aranıyor...")
+            # 2. Telegram Web "Open" ve "PLAY GAME" Butonlarına Tıklama
+            print("🎮 Oyunu başlatan 'Open' / 'PLAY GAME' butonu aranıyor...")
             
             button_selectors = [
-                "button:has-text('PLAY')",
-                "button:has-text('Play')",
-                "a:has-text('PLAY')",
-                "a:has-text('Play')",
-                "text=/Play|Oyna|Start|Launch/i",
+                ".chat-input-control-button",  # Sol alttaki mavi Open butonu
+                ".bot-menu-button",
+                "button:has-text('Open')",
+                "button:has-text('PLAY GAME')",
+                "a:has-text('Open')",
+                "a:has-text('PLAY GAME')",
                 ".reply-markup-button",
-                ".is-primary",
-                "a[href*='game']"
+                ".is-primary"
             ]
             
             clicked = False
             for selector in button_selectors:
                 try:
                     loc = page.locator(selector).last
-                    if loc.is_visible(timeout=4000):
+                    if loc.is_visible(timeout=2000):
                         loc.click(force=True)
                         clicked = True
                         print(f"✅ Butona başarıyla tıklandı: {selector}")
@@ -139,13 +140,12 @@ def run():
                     continue
             
             if not clicked:
-                try:
-                    # Alternatif olarak en alttaki bot menü butonuna veya sohbet içi butona tıkla
-                    page.locator(".reply-markup button, .bottom-bar button, button").last.click(force=True)
-                    print("⚠️ Alternatif buton tıklandı.")
-                except Exception as e:
-                    send_telegram_message(f"❌ Başlatma butonu bulunamadı: {e}")
-                    return
+                print("⚠️ Seçiciler bulunamadı, doğrudan 'Open' buton koordinatlarına tıklanıyor...")
+                # Sol alt "Open" mavi butonu koordinatı
+                page.mouse.click(360, 668)
+                page.wait_for_timeout(2000)
+                # Mesaj içi "PLAY GAME" butonu koordinatı
+                page.mouse.click(550, 565)
 
             page.wait_for_timeout(4000)
 
@@ -156,17 +156,17 @@ def run():
                 "button:has-text('Launch')",
                 "button:has-text('OPEN')",
                 "button:has-text('Open')",
-                "button:has-text('OK')",
                 ".popup-button",
-                ".btn-primary"
+                ".btn-primary",
+                "button.btn-color-primary"
             ]
             
             for l_sel in launch_selectors:
                 try:
                     l_btn = page.locator(l_sel).last
-                    if l_btn.is_visible(timeout=4000):
+                    if l_btn.is_visible(timeout=3000):
                         l_btn.click(force=True)
-                        print(f"🚀 Pop-up 'LAUNCH' butonuna tıklandı: {l_sel}")
+                        print(f"🚀 Pop-up onay butonuna tıklandı: {l_sel}")
                         break
                 except Exception:
                     continue

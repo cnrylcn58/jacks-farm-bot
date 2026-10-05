@@ -110,10 +110,9 @@ def run():
             print(f"🔗 Bot sohbetine gidiliyor: {TELEGRAM_GAME_BOT_URL}")
             page.goto(TELEGRAM_GAME_BOT_URL, wait_until="domcontentloaded", timeout=60000)
             
-            # Sohbetin ve butonların yüklenmesi için bekleme süresi
             page.wait_for_timeout(10000)
 
-            # 2. Oyunu Başlatan Butona Tıkla (Gelişmiş Tıklama Mantığı)
+            # 2. Oyunu Başlatan Butona Tıkla
             print("🎮 Oyunu başlatan buton aranıyor...")
             
             button_selectors = [
@@ -145,13 +144,31 @@ def run():
                     send_telegram_message(f"❌ Başlatma butonu bulunamadı: {e}")
                     return
 
-            page.wait_for_timeout(10000)
+            page.wait_for_timeout(5000)
 
-            # 3. İframe içerisinden taze GAME_URL adresini yakala
-            iframe_element = page.locator("iframe").first
-            game_url = iframe_element.get_attribute("src")
+            # Pop-up onay butonları varsa tıkla (Launch / Continue / Open)
+            try:
+                confirm_btn = page.locator("button:has-text('Launch'), button:has-text('Open'), button:has-text('OK'), .popup-button").first
+                if confirm_btn.is_visible(timeout=4000):
+                    confirm_btn.click(force=True)
+                    print("✅ Pop-up onay butonuna tıklandı.")
+            except Exception:
+                pass
+
+            page.wait_for_timeout(8000)
+
+            # 3. İframe veya Webview İçerisinden Oyun Bağlantısını Yakala
+            print("🔍 Oyun iframe adresi yakalanıyor...")
+            try:
+                page.wait_for_selector("iframe", timeout=20000)
+                iframe_element = page.locator("iframe").first
+                game_url = iframe_element.get_attribute("src")
+            except Exception:
+                game_url = None
 
             if not game_url:
+                # İframe bulunamadıysa doğrudan sayfa URL'sinde game linki var mı kontrol et
+                screenshot(page, "iframe_hatasi", "❌ İframe beklenirken sorun oluştu")
                 send_telegram_message("❌ Taze oyun bağlantısı iframe üzerinden yakalanamadı.")
                 return
 

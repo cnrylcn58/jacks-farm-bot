@@ -146,7 +146,7 @@ def run():
 
             page.wait_for_timeout(3000)
 
-            # --- POP-UP ONAY PENCERESİ (LAUNCH / OPEN) İŞLEME ---
+            # POP-UP ONAY PENCERESİ (LAUNCH / OPEN)
             print("💬 Onay penceresi (LAUNCH) kontrol ediliyor...")
             launch_selectors = [
                 "button:has-text('LAUNCH')",
@@ -198,9 +198,14 @@ def run():
             )
             game_page = mobile_context.new_page()
             game_page.goto(game_url, wait_until="domcontentloaded", timeout=60000)
-            game_page.wait_for_timeout(12000)
+            
+            print("⏳ Oyun ekranının yüklenmesi bekleniyor...")
+            game_page.wait_for_timeout(15000)
 
-            screenshot(game_page, "00_ilk_acilis", "🏡 Oyuna bağlandı (Taze Oturum)")
+            screenshot(game_page, "00_ilk_acilis", "🏡 Oyuna bağlandı (Açılış Ekranı)")
+
+            # ADIM 0: Ana Çiftlik Ekranına Geçiş (Sağ Menüdeki 'Farm' Butonuna Tıkla) -> (365, 545)
+            click_and_capture(game_page, 365, 545, "ADIM 0: Çiftlik Ekranına Geçiş", "00_farm_gecis", wait_time=4000)
 
             # ADIM 1: Depo (Warehouse) -> (282, 253)
             click_and_capture(game_page, 282, 253, "ADIM 1: Depo (Warehouse)", "01_depo", wait_time=4000)
@@ -212,10 +217,10 @@ def run():
             click_and_capture(game_page, 280, 130, "ADIM 3: Market (Shop)", "03_market", wait_time=4000)
 
             # ADIM 4: Sat (Sell) -> (195, 570)
-            click_and_capture(game_page, 195, 570, "ADIM 4: Sat (Sell)", "04_sat", wait_time=5000)
+            click_and_capture(game_page, 195, 570, "ADIM 4: Sat (Sell)", "05_sat", wait_time=5000)
 
             # ADIM 5: Kapat X Butonu -> (350, 200)
-            click_and_capture(game_page, 350, 200, "ADIM 5: X Butonu ile Anasayfa", "05_kapat", wait_time=3000)
+            click_and_capture(game_page, 350, 200, "ADIM 5: X Butonu ile Anasayfa", "06_kapat", wait_time=3000)
 
             send_telegram_message("🎉 Bütün adımlar başarıyla tamamlandı!")
             browser.close()

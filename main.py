@@ -144,36 +144,48 @@ def run():
                     send_telegram_message(f"❌ Başlatma butonu bulunamadı: {e}")
                     return
 
-            page.wait_for_timeout(5000)
+            page.wait_for_timeout(3000)
 
-            # Pop-up onay butonları varsa tıkla (Launch / Continue / Open)
+            # --- POP-UP ONAY PENCERESİ (LAUNCH / OPEN) İŞLEME ---
+            print("💬 Onay penceresi (LAUNCH) kontrol ediliyor...")
+            launch_selectors = [
+                "button:has-text('LAUNCH')",
+                "button:has-text('Launch')",
+                "button:has-text('OPEN')",
+                "button:has-text('Open')",
+                "button:has-text('OK')",
+                ".popup-button",
+                ".btn-primary"
+            ]
+            
+            for l_sel in launch_selectors:
+                try:
+                    l_btn = page.locator(l_sel).last
+                    if l_btn.is_visible(timeout=3000):
+                        l_btn.click(force=True)
+                        print(f"🚀 Pop-up 'LAUNCH' butonuna tıklandı: {l_sel}")
+                        break
+                except Exception:
+                    continue
+
+            page.wait_for_timeout(10000)
+
+            # 3. İframe İçerisinden Taze Oyun Adresini Yakala
+            print("🔍 Oyun iframe adresi bekleniyor...")
             try:
-                confirm_btn = page.locator("button:has-text('Launch'), button:has-text('Open'), button:has-text('OK'), .popup-button").first
-                if confirm_btn.is_visible(timeout=4000):
-                    confirm_btn.click(force=True)
-                    print("✅ Pop-up onay butonuna tıklandı.")
-            except Exception:
-                pass
-
-            page.wait_for_timeout(8000)
-
-            # 3. İframe veya Webview İçerisinden Oyun Bağlantısını Yakala
-            print("🔍 Oyun iframe adresi yakalanıyor...")
-            try:
-                page.wait_for_selector("iframe", timeout=20000)
+                page.wait_for_selector("iframe", timeout=25000)
                 iframe_element = page.locator("iframe").first
                 game_url = iframe_element.get_attribute("src")
             except Exception:
                 game_url = None
 
             if not game_url:
-                # İframe bulunamadıysa doğrudan sayfa URL'sinde game linki var mı kontrol et
                 screenshot(page, "iframe_hatasi", "❌ İframe beklenirken sorun oluştu")
                 send_telegram_message("❌ Taze oyun bağlantısı iframe üzerinden yakalanamadı.")
                 return
 
             print("✅ Taze oyun URL'si başarıyla yakalandı!")
-            context.close()  # Masaüstü Telegram görünümünü kapatıyoruz
+            context.close()  # Masaüstü görünümünü kapatıyoruz
 
             # 4. Yakalanan Taze URL ile Mobil Görünümde Oyunu Çalıştır
             mobile_context = browser.new_context(

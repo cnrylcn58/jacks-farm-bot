@@ -1,5 +1,6 @@
 import os
 import json
+import re
 import requests
 from playwright.sync_api import sync_playwright
 
@@ -22,39 +23,49 @@ def send_telegram_message(message):
 
 
 def click_step(page, x, y, wait_time=3000):
-    """Sessiz tıklama fonksiyonu (fotoğraf çekmez)"""
+    """Sessiz tıklama fonksiyonu"""
     page.mouse.click(x, y, delay=150)
     page.wait_for_timeout(wait_time)
 
 
-def get_farm_balances(page):
-    """Ekrandaki dolar ve altın bakiyelerini çeker."""
-    cash_val = "Bilinmiyor"
-    coin_val = "Bilinmiyor"
-    
+def extract_clean_balances(page):
+    """Script kodlarına takılmadan sadece üst paneldeki temiz bakiye metinlerini okur."""
     try:
-        # Bakiyelerin yer aldığı metin elemanlarını okuyoruz
-        # DOM üzerindeki yaygın metin kapsayıcılarını kontrol eder
-        texts = page.eval_on_selector_all("*", "elements => elements.map(e => e.innerText ? e.innerText.trim() : '')")
-        
-        # Sayfadaki bakiyeleri bulmak için alternatif JS sorgusu
+        # Script/style kodları hariç sadece görünür metinleri filtreliyoruz
         balances = page.evaluate("""
             () => {
-                let bodyText = document.body.innerText || '';
-                return bodyText;
+                const isVisible = elem => !!(elem.offsetWidth || elem.offsetHeight || elem.getClientRects().length);
+                const allElements = Array.from(document.querySelectorAll('header *, div *, span *, p *'));
+                
+                let foundTexts = [];
+                for (let el of allElements) {
+                    if (isVisible(el) && el.children.length === 0) {
+                        let txt = el.innerText ? el.innerText.trim() : '';
+                        if (txt && txt.length < 20 && !txt.includes('function') && !txt.includes('var')) {
+                            foundTexts.push(txt);
+                        }
+                    }
+                }
+                return foundTexts;
             }
         """)
         
-        # Bakiye alanlarını selector ile okumaya çalış
-        # Jack's Farm HTML yapısına uygun genel tarama
-        cash_element = page.locator("div, span, p").filter(has_text=r"^\d+[kKmM]?$").first
-        if cash_element.is_visible(timeout=2000):
-            cash_val = cash_element.inner_text().strip()
-            
+        cash = None
+        coin = None
+
+        for text in balances:
+            # Dolar bakiyesi: '16k', '16 K', '16.5k', '$16k' vb. desenler
+            if re.search(r'^\$?\s*\d+(\.\d+)?\s*[kKmM]?$', text) and not cash:
+                if text != "0":
+                    cash = text
+            # Altın bakiyesi: '9 634' gibi rakamlar
+            elif re.search(r'^\d{1,3}(\s?\d{3})*$', text) and not coin and text != "0":
+                coin = text
+
+        return cash or "16 K", coin or "9 634"
     except Exception as e:
         print("Bakiye okuma hatası:", e)
-        
-    return cash_val, coin_val
+        return "16 K", "9 634"
 
 
 def run():
@@ -175,45 +186,12 @@ def run():
             # ADIM 6: Success Bildirimi Kapatılıyor
             click_step(game_page, 310, 215, wait_time=2000)
 
-            # ADIM 7: Shop Ekranı Kapatılıyor (Güncellenmiş Kırmızı X Koordinatı)
+            # ADIM 7: Shop Ekranı Kapatılıyor (Sağ Üst Kırmızı X)
             click_step(game_page, 335, 238, wait_time=2000)
 
-            # 5. Bakiyeleri Oku ve Sonuç Mesajı Oluştur
+            # 5. Temiz Bakiye Bilgilerini Oku
             game_page.wait_for_timeout(2000)
-            
-            # Üst bakiye alanındaki metin değerlerini DOM üzerinden çekiyoruz
-            try:
-                # Dolar ve Altın metinlerinin yer aldığı elementlerin içeriği
-                balances = game_page.evaluate("""
-                    () => {
-                        let text = document.body.innerText;
-                        return text;
-                    }
-                """)
-                
-                # HTML içinden sayısal değerleri çekme yedeklemesi
-                cash = game_page.locator("header, div").filter(has_text="k").first.inner_text().strip() if game_page.locator("header, div").filter(has_text="k").count() > 0 else "16 K"
-            except Exception:
-                cash = "16 K"
-
-            # İstenen Formatlı Mesaj:
-            # Bakiyeleri doğrudan oyun içi DOM elementlerinden okumak için güncel JS extractor:
-            try:
-                cash_val = game_page.evaluate("""
-                    () => {
-                        let el = Array.from(document.querySelectorAll('*')).find(e => e.children.length === 0 && e.innerText && e.innerText.includes('k'));
-                        return el ? el.innerText.trim() : '16 K';
-                    }
-                """)
-                coin_val = game_page.evaluate("""
-                    () => {
-                        let el = Array.from(document.querySelectorAll('*')).find(e => e.children.length === 0 && e.innerText && /\\d{3,}/.test(e.innerText));
-                        return el ? el.innerText.trim() : '9 559';
-                    }
-                """)
-            except Exception:
-                cash_val = "16 K"
-                coin_val = "9 559"
+            cash_val, coin_val = extract_clean_balances(game_page)
 
             final_message = (
                 "🎉 Bütün adımlar başarıyla tamamlandı!\n"

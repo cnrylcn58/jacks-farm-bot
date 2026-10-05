@@ -204,23 +204,26 @@ def run():
 
             screenshot(game_page, "00_ilk_acilis", "🏡 Oyuna bağlandı (Açılış Ekranı)")
 
-            # ADIM 0: Ana Çiftlik Ekranına Geçiş (Sağ Menüdeki 'Farm' Butonuna Tıkla) -> (365, 545)
+            # ADIM 0: Ana Çiftlik Ekranına Geçiş -> (365, 545)
             click_and_capture(game_page, 365, 545, "ADIM 0: Çiftlik Ekranına Geçiş", "00_farm_gecis", wait_time=4000)
 
             # ADIM 1: Depo (Warehouse) -> (282, 253)
-            click_and_capture(game_page, 282, 253, "ADIM 1: Depo (Warehouse)", "01_depo", wait_time=4000)
+            click_and_capture(game_page, 282, 253, "ADIM 1: Depo Açılıyor", "01_depo_1", wait_time=4000)
 
-            # ADIM 2: Ürünleri gönder -> (195, 570)
-            click_and_capture(game_page, 195, 570, "ADIM 2: Ürünleri gönder", "02_urunleri_gonder", wait_time=5000)
+            # ADIM 2: Ürünleri Gönder -> (195, 570)
+            click_and_capture(game_page, 195, 570, "ADIM 2: Ürünler Gönderiliyor", "02_urunleri_gonder", wait_time=5000)
 
-            # ADIM 3: Market (Shop) -> (280, 130)
-            click_and_capture(game_page, 280, 130, "ADIM 3: Market (Shop)", "03_market", wait_time=4000)
+            # ADIM 3: Depoyu Tekrar Aç -> (282, 253)
+            click_and_capture(game_page, 282, 253, "ADIM 3: Depo Satış İçin Tekrar Açılıyor", "03_depo_2", wait_time=4000)
 
-            # ADIM 4: Sat (Sell) -> (195, 570)
-            click_and_capture(game_page, 195, 570, "ADIM 4: Sat (Sell)", "05_sat", wait_time=5000)
+            # ADIM 4: Satış Tabına Geç (Sell / Shop) -> (280, 130)
+            click_and_capture(game_page, 280, 130, "ADIM 4: Satış Tabı Seçiliyor", "04_satis_tabi", wait_time=3000)
 
-            # ADIM 5: Kapat X Butonu -> (350, 200)
-            click_and_capture(game_page, 350, 200, "ADIM 5: X Butonu ile Anasayfa", "06_kapat", wait_time=3000)
+            # ADIM 5: Sat Butonu (Sell) -> (195, 570)
+            click_and_capture(game_page, 195, 570, "ADIM 5: Ürünler Satılıyor", "05_sat_onay", wait_time=5000)
+
+            # ADIM 6: Kapat X Butonu -> (350, 200)
+            click_and_capture(game_page, 350, 200, "ADIM 6: X Butonu ile Anasayfaya Dönüş", "06_kapat", wait_time=3000)
 
             send_telegram_message("🎉 Bütün adımlar başarıyla tamamlandı!")
             browser.close()

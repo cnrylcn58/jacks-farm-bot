@@ -2,9 +2,9 @@ name: Jacks Farm Bot
 
 on:
   schedule:
-    # UTC saatine göre her 4 saatte bir çalışır (00:00, 04:00, 08:00, 12:00, 16:00, 20:00)
-    - cron: '0 */4 * * *'
-  workflow_dispatch: # İstediğinde manuel başlatmak için
+    # UTC zaman dilimine göre her 2 saatte bir çalışır (00:00, 02:00, 04:00, 06:00...)
+    - cron: '0 */2 * * *'
+  workflow_dispatch: # İstediğinde manuel başlatabilmek için
 
 jobs:
   run-bot:

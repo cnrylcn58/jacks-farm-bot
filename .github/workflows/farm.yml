@@ -2,9 +2,9 @@ name: Jacks Farm Bot
 
 on:
   schedule:
-    # Dakikayı :17 yaparak GitHub'ın saat başı yoğunluk kuyruğunu bypass ediyoruz
-    - cron: '17 */2 * * *'
-  workflow_dispatch: # İstediğinde GitHub üzerinden elle (manuel) başlatmak için
+    # Dakikayı :23 yaparak GitHub kuyruk yoğunluğundan kaçınıyoruz
+    - cron: '23 */2 * * *'
+  workflow_dispatch:
 
 jobs:
   run-bot:

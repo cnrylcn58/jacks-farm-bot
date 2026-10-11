@@ -1,95 +1,278 @@
 import os
-import json
 import re
 import requests
+from datetime import datetime
 from playwright.sync_api import sync_playwright
 
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
 TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID")
-TELEGRAM_GAME_BOT_URL = os.environ.get("TELEGRAM_GAME_BOT_URL", "https://web.telegram.org/k/#@JacksFarm_bot")
+
+TELEGRAM_GAME_BOT_URL = os.environ.get(
+    "TELEGRAM_GAME_BOT_URL",
+    "https://web.telegram.org/k/#@JacksFarm_bot"
+)
 
 
 def send_telegram_message(message):
+    """Telegram'a metin mesajı gönderir."""
     if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID:
+        print("Telegram TOKEN veya CHAT_ID eksik.")
         return
+
     try:
-        requests.post(
+        response = requests.post(
             f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage",
-            data={"chat_id": TELEGRAM_CHAT_ID, "text": message},
+            data={
+                "chat_id": TELEGRAM_CHAT_ID,
+                "text": message,
+            },
             timeout=20,
         )
+        response.raise_for_status()
+
     except Exception as e:
         print("Telegram mesaj hatası:", e)
 
 
-def click_step(page, x, y, wait_time=3000):
-    """Sessiz tıklama fonksiyonu"""
-    page.mouse.click(x, y, delay=150)
-    page.wait_for_timeout(wait_time)
+def send_telegram_photo(image_bytes, caption="📸 Ekran görüntüsü"):
+    """PNG ekran görüntüsünü Telegram'a gönderir."""
+    if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID:
+        print("Telegram TOKEN veya CHAT_ID eksik.")
+        return
+
+    try:
+        response = requests.post(
+            f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendPhoto",
+            data={
+                "chat_id": TELEGRAM_CHAT_ID,
+                "caption": caption[:1024],
+            },
+            files={
+                "photo": (
+                    "screenshot.png",
+                    image_bytes,
+                    "image/png",
+                )
+            },
+            timeout=60,
+        )
+        response.raise_for_status()
+
+        result = response.json()
+        if not result.get("ok"):
+            print("Telegram fotoğraf hatası:", result)
+
+    except Exception as e:
+        print("Telegram fotoğraf gönderme hatası:", e)
+
+
+def send_page_screenshot(page, caption, point=None):
+    """
+    Ekran görüntüsü alır.
+    point=(x, y) verilirse kırmızı noktayı sadece fotoğrafa ekler.
+    """
+    marker_id = "telegram-click-marker"
+
+    try:
+        if point is not None:
+            x, y = point
+
+            page.evaluate(
+                """
+                ({x, y, id}) => {
+                    const old = document.getElementById(id);
+                    if (old) old.remove();
+
+                    const marker = document.createElement('div');
+                    marker.id = id;
+
+                    Object.assign(marker.style, {
+                        position: 'fixed',
+                        left: (x - 9) + 'px',
+                        top: (y - 9) + 'px',
+                        width: '18px',
+                        height: '18px',
+                        borderRadius: '50%',
+                        background: '#ff0000',
+                        border: '3px solid white',
+                        boxShadow: '0 0 0 2px red',
+                        zIndex: '2147483647',
+                        pointerEvents: 'none',
+                        boxSizing: 'border-box'
+                    });
+
+                    document.documentElement.appendChild(marker);
+                }
+                """,
+                {"x": x, "y": y, "id": marker_id},
+            )
+
+        image_bytes = page.screenshot(
+            type="png",
+            full_page=False,
+            animations="disabled",
+            timeout=30000,
+        )
+
+        send_telegram_photo(image_bytes, caption)
+
+    except Exception as e:
+        print("Ekran görüntüsü hatası:", e)
+
+    finally:
+        try:
+            page.evaluate(
+                """
+                id => {
+                    const marker = document.getElementById(id);
+                    if (marker) marker.remove();
+                }
+                """,
+                marker_id,
+            )
+        except Exception:
+            pass
+
+
+def click_step(page, x, y, step_name, wait_time=3000):
+    """Tıklar, bekler ve kırmızı noktalı fotoğraf gönderir."""
+    try:
+        page.mouse.click(x, y, delay=150)
+        page.wait_for_timeout(wait_time)
+
+        send_page_screenshot(
+            page,
+            (
+                f"🔴 {step_name}\n"
+                f"📍 Koordinat: X={x}, Y={y}\n"
+                f"🕒 {datetime.now().strftime('%H:%M:%S')}"
+            ),
+            point=(x, y),
+        )
+
+    except Exception as e:
+        send_telegram_message(
+            f"❌ Adım başarısız: {step_name}\n{str(e)[:2500]}"
+        )
+
+        try:
+            send_page_screenshot(
+                page,
+                f"🚨 Hata ekranı: {step_name}",
+                point=(x, y),
+            )
+        except Exception:
+            pass
+
+        raise
 
 
 def extract_clean_balances(page):
-    """Script kodlarına takılmadan sadece üst paneldeki temiz bakiye metinlerini okur."""
+    """Sayfada görünen olası bakiye değerlerini okur."""
     try:
-        # Script/style kodları hariç sadece görünür metinleri filtreliyoruz
-        balances = page.evaluate("""
+        balances = page.evaluate(
+            """
             () => {
-                const isVisible = elem => !!(elem.offsetWidth || elem.offsetHeight || elem.getClientRects().length);
-                const allElements = Array.from(document.querySelectorAll('header *, div *, span *, p *'));
-                
-                let foundTexts = [];
-                for (let el of allElements) {
-                    if (isVisible(el) && el.children.length === 0) {
-                        let txt = el.innerText ? el.innerText.trim() : '';
-                        if (txt && txt.length < 20 && !txt.includes('function') && !txt.includes('var')) {
-                            foundTexts.push(txt);
-                        }
-                    }
-                }
-                return foundTexts;
+                const visible = el =>
+                    !!(el.offsetWidth ||
+                       el.offsetHeight ||
+                       el.getClientRects().length);
+
+                return Array.from(
+                    document.querySelectorAll(
+                        'header *, div *, span *, p *'
+                    )
+                )
+                .filter(el => visible(el) && el.children.length === 0)
+                .map(el => (el.innerText || '').trim())
+                .filter(txt =>
+                    txt &&
+                    txt.length < 20 &&
+                    !txt.includes('function') &&
+                    !txt.includes('var')
+                );
             }
-        """)
-        
+            """
+        )
+
         cash = None
         coin = None
 
         for text in balances:
-            # Dolar bakiyesi: '16k', '16 K', '16.5k', '$16k' vb. desenler
-            if re.search(r'^\$?\s*\d+(\.\d+)?\s*[kKmM]?$', text) and not cash:
-                if text != "0":
-                    cash = text
-            # Altın bakiyesi: '9 634' gibi rakamlar
-            elif re.search(r'^\d{1,3}(\s?\d{3})*$', text) and not coin and text != "0":
+            if (
+                not cash
+                and re.fullmatch(
+                    r'\$?\s*\d+(?:[.,]\d+)?\s*[kKmM]?',
+                    text,
+                )
+                and text.strip() != "0"
+            ):
+                cash = text
+
+            elif (
+                not coin
+                and re.fullmatch(r'\d{1,3}(?:\s\d{3})+', text)
+                and text.strip() != "0"
+            ):
                 coin = text
 
-        return cash or "16 K", coin or "9 634"
+        return cash or "Okunamadı", coin or "Okunamadı"
+
     except Exception as e:
         print("Bakiye okuma hatası:", e)
-        return "16 K", "9 634"
+        return "Okunamadı", "Okunamadı"
 
 
 def run():
-    print("🤖 Jack's Farm Botu Çalıştırılıyor...")
+    print("🤖 Jack's Farm Botu başlatılıyor...")
+
+    browser = None
+    context = None
+    mobile_context = None
+    page = None
+    game_page = None
 
     try:
+        if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID:
+            raise RuntimeError(
+                "TELEGRAM_BOT_TOKEN veya TELEGRAM_CHAT_ID "
+                "ortam değişkenleri eksik."
+            )
+
+        send_telegram_message(
+            "🚀 Jack's Farm otomasyonu başlatıldı."
+        )
+
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=True)
 
-            # 1. Kaydedilmiş Oturum ile Telegram Web'i Aç
-            if os.path.exists("session.json"):
-                context = browser.new_context(
-                    storage_state="session.json",
-                    viewport={"width": 1280, "height": 720}
+            # 1. Telegram oturumunu yükle
+            if not os.path.exists("session.json"):
+                send_telegram_message(
+                    "❌ HATA: session.json dosyası bulunamadı!"
                 )
-            else:
-                send_telegram_message("❌ HATA: session.json dosyası bulunamadı!")
                 return
 
+            context = browser.new_context(
+                storage_state="session.json",
+                viewport={"width": 1280, "height": 720},
+            )
+
             page = context.new_page()
-            page.goto(TELEGRAM_GAME_BOT_URL, wait_until="domcontentloaded", timeout=60000)
+
+            page.goto(
+                TELEGRAM_GAME_BOT_URL,
+                wait_until="domcontentloaded",
+                timeout=60000,
+            )
             page.wait_for_timeout(8000)
 
-            # 2. Open / PLAY GAME Butonuna Tıkla
+            send_page_screenshot(
+                page,
+                "1️⃣ Telegram Web açıldı",
+            )
+
+            # 2. Open / PLAY GAME butonunu bul
             button_selectors = [
                 ".chat-input-control-button",
                 ".bot-menu-button",
@@ -98,26 +281,48 @@ def run():
                 "a:has-text('Open')",
                 "a:has-text('PLAY GAME')",
             ]
-            
+
             clicked = False
+
             for selector in button_selectors:
                 try:
                     loc = page.locator(selector).last
+
                     if loc.is_visible(timeout=2000):
                         loc.click(force=True)
                         clicked = True
                         break
+
                 except Exception:
                     continue
-            
+
             if not clicked:
                 page.mouse.click(360, 668)
                 page.wait_for_timeout(2000)
+
+                send_page_screenshot(
+                    page,
+                    "2️⃣ Oyun açma butonu için ilk deneme",
+                    point=(360, 668),
+                )
+
                 page.mouse.click(550, 565)
+                page.wait_for_timeout(2000)
+
+                send_page_screenshot(
+                    page,
+                    "3️⃣ Oyun açma butonu için ikinci deneme",
+                    point=(550, 565),
+                )
 
             page.wait_for_timeout(3000)
 
-            # Pop-up Onay Penceresi (LAUNCH)
+            send_page_screenshot(
+                page,
+                "4️⃣ Oyun açma işlemi sonrası",
+            )
+
+            # 3. LAUNCH / OPEN onay penceresi
             launch_selectors = [
                 "button:has-text('LAUNCH')",
                 "button:has-text('Launch')",
@@ -125,33 +330,61 @@ def run():
                 "button:has-text('Open')",
                 ".popup-button",
             ]
-            
-            for l_sel in launch_selectors:
+
+            for selector in launch_selectors:
                 try:
-                    l_btn = page.locator(l_sel).last
-                    if l_btn.is_visible(timeout=2000):
-                        l_btn.click(force=True)
+                    loc = page.locator(selector).last
+
+                    if loc.is_visible(timeout=2000):
+                        loc.click(force=True)
+                        page.wait_for_timeout(3000)
+
+                        send_page_screenshot(
+                            page,
+                            "5️⃣ Launch / Open butonuna basıldı",
+                        )
                         break
+
                 except Exception:
                     continue
 
             page.wait_for_timeout(10000)
 
-            # 3. İframe Oyun Adresini Yakala
+            send_page_screenshot(
+                page,
+                "6️⃣ Oyun başlatıldıktan sonraki Telegram ekranı",
+            )
+
+            # 4. Oyun iframe adresini al
             try:
                 page.wait_for_selector("iframe", timeout=30000)
                 iframe_element = page.locator("iframe").first
                 game_url = iframe_element.get_attribute("src")
+
             except Exception:
                 game_url = None
 
             if not game_url:
-                send_telegram_message("❌ Oyun bağlantısı açılamadı.")
+                send_page_screenshot(
+                    page,
+                    "❌ Oyun iframe'i bulunamadı",
+                )
+
+                send_telegram_message(
+                    "❌ Oyun bağlantısı alınamadı. "
+                    "Telegram ekran görüntüsünü kontrol et."
+                )
                 return
 
-            context.close()
+            send_telegram_message(
+                "🔗 Oyun iframe adresi alındı:\n"
+                f"{game_url}"
+            )
 
-            # 4. Mobil Görünümde Oyunu Çalıştır ve Adımları Yap
+            # 5. Yeni oyun bağlamını aç
+            context.close()
+            context = None
+
             mobile_context = browser.new_context(
                 viewport={"width": 390, "height": 844},
                 user_agent=(
@@ -160,54 +393,129 @@ def run():
                     "Version/16.6 Mobile/15E148 Safari/604.1"
                 ),
             )
+
             game_page = mobile_context.new_page()
-            game_page.goto(game_url, wait_until="domcontentloaded", timeout=60000)
+
+            game_page.goto(
+                game_url,
+                wait_until="domcontentloaded",
+                timeout=60000,
+            )
             game_page.wait_for_timeout(12000)
 
-            # --- SESSİZ OYUN ADIMLARI (YENİ SIRALAMA) ---
-            
-            # Adım 0: Ana Çiftlik Ekranına Geçiş
-            click_step(game_page, 365, 545, wait_time=3000)
-
-            # Adım 1: Depo Satış İçin Açılıyor
-            click_step(game_page, 282, 253, wait_time=3000)
-
-            # Adım 2: Satış Tabı Seçiliyor
-            click_step(game_page, 280, 130, wait_time=2500)
-
-            # Adım 3: Ürünler Satılıyor
-            click_step(game_page, 195, 570, wait_time=3500)
-
-            # Adım 4: Success Bildirimi Kapatılıyor
-            click_step(game_page, 310, 215, wait_time=2000)
-
-            # Adım 5: Shop Ekranı Kapatılıyor (Satış Sonrası)
-            click_step(game_page, 335, 238, wait_time=2000)
-
-            # Adım 6: Depo Tekrar Açılıyor (Yeni ürün göndermek için)
-            click_step(game_page, 282, 253, wait_time=3000)
-
-            # Adım 7: Ürünler Gönderiliyor
-            click_step(game_page, 195, 570, wait_time=4000)
-
-            # Kapanış: Shop Ekranı Kapatılıyor (Sağ Üst Kırmızı X)
-            click_step(game_page, 335, 238, wait_time=2000)
-
-            # 5. Temiz Bakiye Bilgilerini Oku
-            game_page.wait_for_timeout(2000)
-            cash_val, coin_val = extract_clean_balances(game_page)
-
-            final_message = (
-                "🎉 Bütün adımlar başarıyla tamamlandı!\n"
-                f"💵 {cash_val}\n"
-                f"🪙 {coin_val}"
+            send_page_screenshot(
+                game_page,
+                "7️⃣ Oyun ekranı yüklendi",
             )
 
-            send_telegram_message(final_message)
-            browser.close()
+            # 6. Oyun adımları: Her adım sonrası kırmızı noktalı fotoğraf
+
+            click_step(
+                game_page, 365, 545,
+                "Adım 0: Ana çiftlik ekranı",
+                3000,
+            )
+
+            click_step(
+                game_page, 282, 253,
+                "Adım 1: Depo açılıyor",
+                3000,
+            )
+
+            click_step(
+                game_page, 280, 130,
+                "Adım 2: Satış sekmesi seçiliyor",
+                2500,
+            )
+
+            click_step(
+                game_page, 195, 570,
+                "Adım 3: Ürünler satılıyor",
+                3500,
+            )
+
+            click_step(
+                game_page, 310, 215,
+                "Adım 4: Başarı bildirimi kapatılıyor",
+                2000,
+            )
+
+            click_step(
+                game_page, 335, 238,
+                "Adım 5: Shop ekranı kapatılıyor",
+                2000,
+            )
+
+            click_step(
+                game_page, 282, 253,
+                "Adım 6: Depo tekrar açılıyor",
+                3000,
+            )
+
+            click_step(
+                game_page, 195, 570,
+                "Adım 7: Ürünler gönderiliyor",
+                4000,
+            )
+
+            click_step(
+                game_page, 335, 238,
+                "Adım 8: Shop ekranı kapatılıyor",
+                2000,
+            )
+
+            # 7. Son bakiye ve fotoğraf
+            game_page.wait_for_timeout(2000)
+
+            cash_val, coin_val = extract_clean_balances(game_page)
+
+            send_page_screenshot(
+                game_page,
+                "🏁 Son oyun ekranı",
+            )
+
+            send_telegram_message(
+                "🎉 Oyun adımları tamamlandı!\n"
+                f"💵 Bakiye: {cash_val}\n"
+                f"🪙 Altın: {coin_val}"
+            )
 
     except Exception as e:
-        send_telegram_message(f"❌ Hata oluştu: {str(e)}")
+        print("Bot hatası:", e)
+
+        send_telegram_message(
+            f"❌ Bot hatası:\n{str(e)[:3000]}"
+        )
+
+        error_page = game_page or page
+
+        if error_page:
+            try:
+                send_page_screenshot(
+                    error_page,
+                    "🚨 Hata anındaki ekran görüntüsü",
+                )
+            except Exception as screenshot_error:
+                print(
+                    "Hata ekranı gönderilemedi:",
+                    screenshot_error,
+                )
+
+    finally:
+        for ctx in (mobile_context, context):
+            if ctx:
+                try:
+                    ctx.close()
+                except Exception:
+                    pass
+
+        if browser:
+            try:
+                browser.close()
+            except Exception:
+                pass
+
+        print("🏁 Bot işlemi sona erdi.")
 
 
 if __name__ == "__main__":

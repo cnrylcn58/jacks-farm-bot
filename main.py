@@ -1,4 +1,4 @@
-İmport os
+import os
 import json
 import re
 import requests
@@ -212,6 +212,3 @@ def run():
 
 if __name__ == "__main__":
     run()
-
-
-Kodu bu şekilde yaptım. Ürünler satılıyor fakat depoya ürün gönderilmiyor

@@ -1,4 +1,4 @@
-import os
+İmport os
 import json
 import re
 import requests
@@ -22,64 +22,16 @@ def send_telegram_message(message):
         print("Telegram mesaj hatası:", e)
 
 
-def send_telegram_photo(photo_bytes, caption):
-    if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID:
-        return
-    try:
-        requests.post(
-            f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendPhoto",
-            data={"chat_id": TELEGRAM_CHAT_ID, "caption": caption},
-            files={"photo": ("click.png", photo_bytes, "image/png")},
-            timeout=30,
-        )
-    except Exception as e:
-        print("Telegram fotoğraf hatası:", e)
-
-
-def click_step(page, x, y, step_name, wait_time=3000):
-    """Tıklama yapar, eski noktaları temizleyip yeni kırmızı nokta basarak ekran görüntüsü alır ve Telegram'a gönderir"""
-    try:
-        # Önceki kırmızı noktaları temizle ve yeni nokta ekle
-        page.evaluate(f"""
-            () => {{
-                document.querySelectorAll('.bot-click-dot').forEach(el => el.remove());
-                
-                const dot = document.createElement('div');
-                dot.className = 'bot-click-dot';
-                dot.style.position = 'absolute';
-                dot.style.left = '{x - 15}px';
-                dot.style.top = '{y - 15}px';
-                dot.style.width = '30px';
-                dot.style.height = '30px';
-                dot.style.borderRadius = '50%';
-                dot.style.backgroundColor = 'red';
-                dot.style.border = '3px solid white';
-                dot.style.boxShadow = '0 0 10px black';
-                dot.style.zIndex = '999999';
-                document.body.appendChild(dot);
-            }}
-        """)
-        
-        page.wait_for_timeout(300)
-
-        # Ekran görüntüsü al
-        screenshot_bytes = page.screenshot()
-
-        # Tıklamayı gerçekleştir
-        page.mouse.click(x, y, delay=150)
-        
-        # Fotoğrafı Telegram'a gönder
-        send_telegram_photo(screenshot_bytes, f"📍 {step_name} (X: {x}, Y: {y})")
-
-        # Sonraki adım için bekleme
-        page.wait_for_timeout(wait_time)
-    except Exception as e:
-        print(f"Adım hatası ({step_name}):", e)
+def click_step(page, x, y, wait_time=3000):
+    """Sessiz tıklama fonksiyonu"""
+    page.mouse.click(x, y, delay=150)
+    page.wait_for_timeout(wait_time)
 
 
 def extract_clean_balances(page):
     """Script kodlarına takılmadan sadece üst paneldeki temiz bakiye metinlerini okur."""
     try:
+        # Script/style kodları hariç sadece görünür metinleri filtreliyoruz
         balances = page.evaluate("""
             () => {
                 const isVisible = elem => !!(elem.offsetWidth || elem.offsetHeight || elem.getClientRects().length);
@@ -102,9 +54,11 @@ def extract_clean_balances(page):
         coin = None
 
         for text in balances:
+            # Dolar bakiyesi: '16k', '16 K', '16.5k', '$16k' vb. desenler
             if re.search(r'^\$?\s*\d+(\.\d+)?\s*[kKmM]?$', text) and not cash:
                 if text != "0":
                     cash = text
+            # Altın bakiyesi: '9 634' gibi rakamlar
             elif re.search(r'^\d{1,3}(\s?\d{3})*$', text) and not coin and text != "0":
                 coin = text
 
@@ -115,7 +69,7 @@ def extract_clean_balances(page):
 
 
 def run():
-    print("🤖 Jack's Farm Botu Çalıştırılıyor (Görsel Mod)...")
+    print("🤖 Jack's Farm Botu Çalıştırılıyor...")
 
     try:
         with sync_playwright() as p:
@@ -210,34 +164,34 @@ def run():
             game_page.goto(game_url, wait_until="domcontentloaded", timeout=60000)
             game_page.wait_for_timeout(12000)
 
-            # --- SESSİZ OYUN ADIMLARI (GÖRSEL İŞARETLİ) ---
+            # --- SESSİZ OYUN ADIMLARI (YENİ SIRALAMA) ---
             
             # Adım 0: Ana Çiftlik Ekranına Geçiş
-            click_step(game_page, 365, 545, "Ana Çiftlik Ekranına Geçiş", wait_time=3000)
+            click_step(game_page, 365, 545, wait_time=3000)
 
             # Adım 1: Depo Satış İçin Açılıyor
-            click_step(game_page, 282, 253, "Depo Satış İçin Açılıyor", wait_time=3000)
+            click_step(game_page, 282, 253, wait_time=3000)
 
             # Adım 2: Satış Tabı Seçiliyor
-            click_step(game_page, 280, 130, "Satış Tabı Seçiliyor", wait_time=2500)
+            click_step(game_page, 280, 130, wait_time=2500)
 
             # Adım 3: Ürünler Satılıyor
-            click_step(game_page, 195, 570, "Ürünler Satılıyor", wait_time=3500)
+            click_step(game_page, 195, 570, wait_time=3500)
 
             # Adım 4: Success Bildirimi Kapatılıyor
-            click_step(game_page, 310, 215, "Success Bildirimi Kapatılıyor", wait_time=2000)
+            click_step(game_page, 310, 215, wait_time=2000)
 
             # Adım 5: Shop Ekranı Kapatılıyor (Satış Sonrası)
-            click_step(game_page, 335, 238, "Shop Ekranı Kapatılıyor", wait_time=2000)
+            click_step(game_page, 335, 238, wait_time=2000)
 
             # Adım 6: Depo Tekrar Açılıyor (Yeni ürün göndermek için)
-            click_step(game_page, 282, 253, "Depo Tekrar Açılıyor", wait_time=3000)
+            click_step(game_page, 282, 253, wait_time=3000)
 
             # Adım 7: Ürünler Gönderiliyor
-            click_step(game_page, 195, 570, "Yeni Ürünler Gönderiliyor", wait_time=4000)
+            click_step(game_page, 195, 570, wait_time=4000)
 
             # Kapanış: Shop Ekranı Kapatılıyor (Sağ Üst Kırmızı X)
-            click_step(game_page, 335, 238, "Shop Ekranı Kapatılıyor (Son)", wait_time=2000)
+            click_step(game_page, 335, 238, wait_time=2000)
 
             # 5. Temiz Bakiye Bilgilerini Oku
             game_page.wait_for_timeout(2000)
@@ -258,3 +212,6 @@ def run():
 
 if __name__ == "__main__":
     run()
+
+
+Kodu bu şekilde yaptım. Ürünler satılıyor fakat depoya ürün gönderilmiyor

@@ -1,4 +1,4 @@
-Name: Jacks Farm Bot
+name: Jacks Farm Bot
 
 on:
   schedule:

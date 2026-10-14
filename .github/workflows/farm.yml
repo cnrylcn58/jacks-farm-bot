@@ -1,9 +1,8 @@
-name: Jacks Farm Bot
+Name: Jacks Farm Bot
 
 on:
   schedule:
-    # Dakikayı :23 yaparak GitHub kuyruk yoğunluğundan kaçınıyoruz
-    - cron: '23 */2 * * *'
+    - cron: '0 */3 * * *'
   workflow_dispatch:
 
 jobs:

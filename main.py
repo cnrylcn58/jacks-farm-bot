@@ -14,9 +14,12 @@ TELEGRAM_GAME_BOT_URL = os.environ.get(
 VIEWPORT_WIDTH = 390
 VIEWPORT_HEIGHT = 844
 
-# Özel koordinatlar
+# Tıklama koordinatları
 OPEN_X = 50
 OPEN_Y = 810
+
+LAUNCH_X = 310
+LAUNCH_Y = 470
 
 
 def send_telegram_message(message):
@@ -226,11 +229,11 @@ def run():
             )
             page.wait_for_timeout(10000)
 
-            # 2. Open tuşu (Yeni koordinat: 50, 780)
+            # 2. Open butonu
             click_step(page, OPEN_X, OPEN_Y, "Open butonu", 5000)
 
-            # 3. Launch onay penceresi
-            click_step(page, 200, 470, "Launch adimi", 8000)
+            # 3. Launch adımı
+            click_step(page, LAUNCH_X, LAUNCH_Y, "Launch adimi", 8000)
 
             game_page = page
 

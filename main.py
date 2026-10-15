@@ -79,7 +79,7 @@ def capture_and_send(page, filename, caption):
 
 
 def mark_red_dot(page, x, y):
-    """Tıklanan koordinata kırmızı daire ekler."""
+    """Tıklanan koordinata kırmızı daire ekler (Görsel doğrulama için)."""
     try:
         page.evaluate(
             """({x, y}) => {
@@ -112,7 +112,7 @@ def mark_red_dot(page, x, y):
 
 
 def click_step(page, x, y, step_name, wait_time=3000):
-    """Belirlenen koordinata kırmızı nokta koyar, tıklar ve fotoğrafını gönderir."""
+    """Belirlenen koordinata tıklar (Fotoğraf göndermez)."""
     print(f"🔴 {step_name}: X={x}, Y={y}")
 
     try:
@@ -121,15 +121,12 @@ def click_step(page, x, y, step_name, wait_time=3000):
 
         page.mouse.click(x, y, delay=150)
         page.wait_for_timeout(wait_time)
-
-        filename = f"step_{step_name.lower().replace(' ', '_').replace(':', '')}.png"
-        capture_and_send(page, filename, f"🔴 {step_name} (X={x}, Y={y})")
     except Exception as e:
         print(f"{step_name} tıklama hatası:", e)
 
 
 def extract_clean_balances(page):
-    """Görünen metinlerden olası bakiye değerlerini okur."""
+    """Sol üstteki bakiye ve altın değerlerini daha esnek bir şekilde okur."""
     try:
         balances = page.evaluate(
             """
@@ -148,7 +145,7 @@ def extract_clean_balances(page):
                 .map(el => (el.innerText || '').trim())
                 .filter(txt =>
                     txt &&
-                    txt.length < 20 &&
+                    txt.length < 25 &&
                     !txt.includes('function') &&
                     !txt.includes('var')
                 );
@@ -160,25 +157,17 @@ def extract_clean_balances(page):
         coin = None
 
         for text in balances:
-            if (
-                not cash
-                and re.fullmatch(
-                    r'\$?\s*\d+(?:[.,]\d+)?\s*[kKmM]?',
-                    text,
-                )
-                and text.strip() != "0"
-            ):
-                cash = text
+            # Yeşil kutudaki nakit bakiye (örn: 7 039 veya 7,039)
+            if not cash and re.search(r'\d{1,3}(?:[.,]\d{3})*', text):
+                # İçinde harf geçmeyen veya para birimi barındıran sayıları yakala
+                cleaned = text.replace('$', '').strip()
+                if re.fullmatch(r'\d{1,3}(?:\s?\d{3})*', cleaned) and int(cleaned.replace(' ', '')) > 1:
+                    cash = cleaned
 
-            elif (
-                not coin
-                and re.fullmatch(
-                    r'\d{1,3}(?:\s\d{3})+',
-                    text,
-                )
-                and text.strip() != "0"
-            ):
-                coin = text
+            # Sarı kutudaki altın (örn: 17k, 5000 vb.)
+            if not coin and (re.fullmatch(r'\d+[kKmM]?', text) or re.fullmatch(r'\d{1,3}(?:\s\d{3})+', text)):
+                if text.strip() != "0":
+                    coin = text
 
         return cash or "Okunamadı", coin or "Okunamadı"
 
@@ -271,6 +260,7 @@ def run():
                 f"🪙 Altın: {coin_val}"
             )
 
+            # Sadece en son aşamada ekran görüntüsü gönderilir
             capture_and_send(game_page, "final_result.png", final_message)
             print(final_message)
 

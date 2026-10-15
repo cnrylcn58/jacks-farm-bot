@@ -201,7 +201,6 @@ def run():
                     "session.json dosyası bulunamadı!"
                 )
 
-            # Doğrudan mobil görünüm ve user-agent ile başlatıyoruz
             context = browser.new_context(
                 storage_state="session.json",
                 viewport={"width": VIEWPORT_WIDTH, "height": VIEWPORT_HEIGHT},
@@ -223,13 +222,28 @@ def run():
             )
             page.wait_for_timeout(10000)
 
-            # 2. Open / Başlat butonu (Koordinat tabanlı güvenli tıklama)
-            click_step(page, 200, 780, "Open butonu", 5000)
+            # 2. OPEN APP / Open butonunu metin bazlı akıllı arama ile bul
+            print("2. Open butonu aranıyor...")
+            opened = False
+            for text_val in ["OPEN APP", "Open", "open", "PLAY", "Play"]:
+                try:
+                    btn = page.get_by_text(text_val, exact=False).last
+                    if btn.is_visible(timeout=2000):
+                        btn.click(timeout=3000)
+                        opened = True
+                        print(f"'{text_val}' metniyle Open butonuna tıklandı.")
+                        break
+                except Exception:
+                    continue
+
+            if not opened:
+                raise RuntimeError("Open / OPEN APP düğmesi bulunamadı.")
+
+            page.wait_for_timeout(5000)
 
             # 3. Launch onay penceresi
             click_step(page, 200, 470, "Launch adimi", 8000)
 
-            # İframe yok, doğrudan aynı sayfada oyun yüklendiği için devam ediyoruz
             game_page = page
 
             # 4. Ana çiftlik ekranı

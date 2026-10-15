@@ -16,7 +16,7 @@ VIEWPORT_HEIGHT = 844
 
 # Özel koordinatlar
 OPEN_X = 50
-OPEN_Y = 780
+OPEN_Y = 810
 
 
 def send_telegram_message(message):

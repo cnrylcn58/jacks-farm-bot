@@ -253,7 +253,7 @@ def run():
             click_step(game_page, 325, 340, "Adim 4 Basari bildirimi", 2000)
 
             # 9. Shop ekranını kapat
-            click_step(game_page, 349, 270, "Adim 5 Shop kapatma", 2500)
+            click_step(game_page, 349, 340, "Adim 5 Shop kapatma", 2500)
 
             # 10. Depoyu yeniden aç
             click_step(game_page, 310, 260, "Adim 6 Depo tekrar aciliyor", 3000)

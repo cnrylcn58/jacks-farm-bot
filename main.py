@@ -247,7 +247,7 @@ def run():
             click_step(game_page, 310, 260, "Adim 2 Satis sekmesi", 2500)
 
             # 7. Ürünleri sat
-            click_step(game_page, 195, 570, "Adim 3 Urun satisi", 3500)
+            click_step(game_page, 195, 710, "Adim 3 Urun satisi", 3500)
 
             # 8. Başarı bildirimi kapat
             click_step(game_page, 310, 215, "Adim 4 Basari bildirimi", 2000)

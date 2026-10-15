@@ -14,6 +14,10 @@ TELEGRAM_GAME_BOT_URL = os.environ.get(
 VIEWPORT_WIDTH = 390
 VIEWPORT_HEIGHT = 844
 
+# Özel koordinatlar
+OPEN_X = 50
+OPEN_Y = 780
+
 
 def send_telegram_message(message):
     """Telegram'a metin bildirimi gönderir."""
@@ -222,24 +226,8 @@ def run():
             )
             page.wait_for_timeout(10000)
 
-            # 2. OPEN APP / Open butonunu metin bazlı akıllı arama ile bul
-            print("2. Open butonu aranıyor...")
-            opened = False
-            for text_val in ["OPEN APP", "Open", "open", "PLAY", "Play"]:
-                try:
-                    btn = page.get_by_text(text_val, exact=False).last
-                    if btn.is_visible(timeout=2000):
-                        btn.click(timeout=3000)
-                        opened = True
-                        print(f"'{text_val}' metniyle Open butonuna tıklandı.")
-                        break
-                except Exception:
-                    continue
-
-            if not opened:
-                raise RuntimeError("Open / OPEN APP düğmesi bulunamadı.")
-
-            page.wait_for_timeout(5000)
+            # 2. Open tuşu (Yeni koordinat: 50, 780)
+            click_step(page, OPEN_X, OPEN_Y, "Open butonu", 5000)
 
             # 3. Launch onay penceresi
             click_step(page, 200, 470, "Launch adimi", 8000)

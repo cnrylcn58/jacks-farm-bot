@@ -185,9 +185,7 @@ def run():
 
     browser = None
     context = None
-    mobile_context = None
     page = None
-    game_page = None
 
     try:
         if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID:
@@ -203,101 +201,10 @@ def run():
                     "session.json dosyası bulunamadı!"
                 )
 
+            # Doğrudan mobil görünüm ve user-agent ile başlatıyoruz
             context = browser.new_context(
                 storage_state="session.json",
-                viewport={"width": 1280, "height": 720},
-            )
-
-            page = context.new_page()
-
-            page.goto(
-                TELEGRAM_GAME_BOT_URL,
-                wait_until="domcontentloaded",
-                timeout=60000,
-            )
-            page.wait_for_timeout(8000)
-
-            # Open / PLAY GAME butonunu bul
-            button_selectors = [
-                ".chat-input-control-button",
-                ".bot-menu-button",
-                "button:has-text('Open')",
-                "button:has-text('PLAY GAME')",
-                "a:has-text('Open')",
-                "a:has-text('PLAY GAME')",
-            ]
-
-            clicked = False
-
-            for selector in button_selectors:
-                try:
-                    loc = page.locator(selector).last
-
-                    if loc.is_visible(timeout=2000):
-                        loc.click(force=True)
-                        clicked = True
-                        break
-
-                except Exception:
-                    continue
-
-            if not clicked:
-                click_step(page, 360, 668, "Oyun acma ilk denemesi", 2000)
-                click_step(page, 550, 565, "Oyun acma ikinci denemesi", 2000)
-
-            page.wait_for_timeout(3000)
-
-            # Launch / Open onay penceresi
-            launch_selectors = [
-                "button:has-text('LAUNCH')",
-                "button:has-text('Launch')",
-                "button:has-text('OPEN')",
-                "button:has-text('Open')",
-                ".popup-button",
-            ]
-
-            for selector in launch_selectors:
-                try:
-                    loc = page.locator(selector).last
-
-                    if loc.is_visible(timeout=2000):
-                        loc.click(force=True)
-                        page.wait_for_timeout(3000)
-                        break
-
-                except Exception:
-                    continue
-
-            page.wait_for_timeout(10000)
-
-            try:
-                page.wait_for_selector(
-                    "iframe",
-                    timeout=30000,
-                )
-
-                game_url = (
-                    page.locator("iframe")
-                    .first
-                    .get_attribute("src")
-                )
-
-            except Exception:
-                game_url = None
-
-            if not game_url:
-                raise RuntimeError(
-                    "Oyun iframe bağlantısı alınamadı."
-                )
-
-            context.close()
-            context = None
-
-            mobile_context = browser.new_context(
-                viewport={
-                    "width": VIEWPORT_WIDTH,
-                    "height": VIEWPORT_HEIGHT,
-                },
+                viewport={"width": VIEWPORT_WIDTH, "height": VIEWPORT_HEIGHT},
                 user_agent=(
                     "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) "
                     "AppleWebKit/605.1.15 (KHTML, like Gecko) "
@@ -305,23 +212,48 @@ def run():
                 ),
             )
 
-            game_page = mobile_context.new_page()
+            page = context.new_page()
+            page.set_default_timeout(15000)
 
-            game_page.goto(
-                game_url,
+            print("1. Telegram Web açılıyor...")
+            page.goto(
+                TELEGRAM_GAME_BOT_URL,
                 wait_until="domcontentloaded",
                 timeout=60000,
             )
-            game_page.wait_for_timeout(12000)
+            page.wait_for_timeout(10000)
 
-            # Adımlar ve fotoğraf gönderimleri
+            # 2. Open / Başlat butonu (Koordinat tabanlı güvenli tıklama)
+            click_step(page, 200, 780, "Open butonu", 5000)
+
+            # 3. Launch onay penceresi
+            click_step(page, 200, 470, "Launch adimi", 8000)
+
+            # İframe yok, doğrudan aynı sayfada oyun yüklendiği için devam ediyoruz
+            game_page = page
+
+            # 4. Ana çiftlik ekranı
             click_step(game_page, 365, 545, "Adim 0 Ana ciftlik", 3000)
+
+            # 5. Depoyu aç
             click_step(game_page, 282, 253, "Adim 1 Depo aciliyor", 3000)
+
+            # 6. Satış sekmesini seç
             click_step(game_page, 280, 130, "Adim 2 Satis sekmesi", 2500)
+
+            # 7. Ürünleri sat
             click_step(game_page, 195, 570, "Adim 3 Urun satisi", 3500)
+
+            # 8. Başarı bildirimi kapat
             click_step(game_page, 310, 215, "Adim 4 Basari bildirimi", 2000)
+
+            # 9. Shop ekranını kapat
             click_step(game_page, 349, 198, "Adim 5 Shop kapatma", 2500)
+
+            # 10. Depoyu yeniden aç
             click_step(game_page, 282, 253, "Adim 6 Depo tekrar aciliyor", 3000)
+
+            # 11. Ürün gönderme
             click_step(game_page, 195, 570, "Adim 7 Urun gonderme", 4000)
 
             game_page.wait_for_timeout(2000)
@@ -344,12 +276,11 @@ def run():
         )
 
     finally:
-        for ctx in (mobile_context, context):
-            if ctx:
-                try:
-                    ctx.close()
-                except Exception:
-                    pass
+        if context:
+            try:
+                context.close()
+            except Exception:
+                pass
 
         if browser:
             try:

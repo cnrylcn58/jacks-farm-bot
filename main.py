@@ -238,13 +238,13 @@ def run():
             game_page = page
 
             # 4. Ana çiftlik ekranı
-            click_step(game_page, 365, 545, "Adim 0 Ana ciftlik", 3000)
+            click_step(game_page, 370, 440, "Adim 0 Ana ciftlik", 3000)
 
             # 5. Depoyu aç
-            click_step(game_page, 282, 253, "Adim 1 Depo aciliyor", 3000)
+            click_step(game_page, 310, 260, "Adim 1 Depo aciliyor", 3000)
 
             # 6. Satış sekmesini seç
-            click_step(game_page, 280, 130, "Adim 2 Satis sekmesi", 2500)
+            click_step(game_page, 300, 220, "Adim 2 Satis sekmesi", 2500)
 
             # 7. Ürünleri sat
             click_step(game_page, 195, 570, "Adim 3 Urun satisi", 3500)
